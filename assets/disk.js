@@ -8,15 +8,11 @@
   const TAU = Math.PI * 2;
   const STEP = TAU / SECTORS;
 
-  function normAngle(a){
-    a = a % TAU;
-    return (a < 0) ? a + TAU : a;
-  }
-
-  // slot 0 = 12:00
+  // slot 0 = 12:00 (tas pats, ko tu redzi augšā)
+  // FIX: pareiza indeksēšana, lai redzamais cipars sakrīt ar getCodeAtTarget()
   function angleToTopIndex(angle){
-    const a = normAngle(angle - (-Math.PI/2));
-    return (Math.round(a / STEP) % SECTORS);
+    const idx = Math.round(-angle / STEP);
+    return ((idx % SECTORS) + SECTORS) % SECTORS;
   }
 
   function roundRect(ctx, x, y, w, h, r){
@@ -44,10 +40,10 @@
     let statusOk = false;
 
     // ===== “Pārbaudīt” poga =====
-    // Poga ir pārbīdīta uz AUGŠU, lai kartīte apakšā nekad nepārklāj.
+    // Poga augšā, lai apakšējā kartīte nepārklāj.
     const checkBtn = {
       r: 62,
-      y: -62, // <<< te ir atslēga (augšā)
+      y: -62,
       label: "Pārbaudīt",
     };
     let onCheck = null;
@@ -114,7 +110,7 @@
         ctx.strokeStyle = "rgba(255,255,255,.14)";
         ctx.stroke();
 
-        // target highlight
+        // target highlight + bultiņa
         if(i === targetSlot){
           ctx.save();
           ctx.beginPath();
@@ -124,7 +120,6 @@
           ctx.stroke();
           ctx.restore();
 
-          // bultiņa ārpus gredzena
           ctx.save();
           const r = fixedRing.r1 + 18;
           ctx.translate(Math.cos(mid)*r, Math.sin(mid)*r);
@@ -283,7 +278,7 @@
     }
 
     function isCheckButtonHit(x,y){
-      // poga lokāli ir (0, checkBtn.y), globāli (cx, cy + checkBtn.y)
+      // poga lokāli (0, checkBtn.y) => globāli (cx, cy + checkBtn.y)
       const dx = x - cx;
       const dy = y - (cy + checkBtn.y);
       return Math.hypot(dx,dy) <= checkBtn.r;
@@ -348,7 +343,6 @@
     }
     requestAnimationFrame(tick);
 
-    // ===== PUBLIC API =====
     return {
       setInteractive(v){ interactive = !!v; },
       setTargetSlot(slot){ targetSlot = ((slot%SECTORS)+SECTORS)%SECTORS; },
