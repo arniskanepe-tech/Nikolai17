@@ -9,7 +9,6 @@
     symbols: ["★","☾","▲","◆","✚","⬣","⬟","●","▣"],
   };
 
-  const scene = document.getElementById("scene");
   const diskShell = document.getElementById("diskShell");
   const canvas = document.getElementById("diskCanvas");
   const feedback = document.getElementById("feedback");
@@ -33,24 +32,35 @@
   function openDisk(){
     if (isOpen) return;
     isOpen = true;
+
     diskShell.classList.add("disk-center");
     diskShell.classList.remove("disk-corner");
+
     disk.setInteractive(true);
-    feedback.innerHTML = `Uzgriez disku, līdz pretī mērķa simbolam <strong>${level.symbols[level.targetSlot]}</strong> redzi kodu <strong>${level.answer}</strong>. Kad pareizi — centrā parādīsies <strong>OK</strong>.`;
+
+    // ja jau atrisināts, rādām OK; ja nē, tad ?
+    disk.renderStatus(solved ? "OK" : "?", solved);
+
+    feedback.innerHTML =
+      `Uzgriez disku, līdz pretī mērķa simbolam <strong>${level.symbols[level.targetSlot]}</strong> redzi kodu <strong>${level.answer}</strong>. ` +
+      `Kad pareizi — centrā parādīsies <strong>OK</strong>.`;
   }
 
   function closeDisk(){
     if (!isOpen) return;
     isOpen = false;
+
     diskShell.classList.add("disk-corner");
     diskShell.classList.remove("disk-center");
+
     disk.setInteractive(false);
+    // stūrī atstāj kā ir (auto-rotate), solved statusu nemainām
   }
 
   // Klikšķis uz diska atver TIKAI stūra režīmā
-   diskShell.addEventListener("click", (e) => {
+  diskShell.addEventListener("click", (e) => {
     if (!diskShell.classList.contains("disk-corner")) return;
-   openDisk();
+    openDisk();
   });
 
   // Klikšķis ārpus diska aizver
@@ -60,18 +70,13 @@
     closeDisk();
   });
 
-  // Realtime pārbaude: ja kods sakrīt -> OK centrā
+  // Pārbaude: ja kods sakrīt -> fiksē OK (neatceļam vairs)
   function loop(){
-    const atTarget = disk.getCodeAtTarget();
-    if (atTarget === level.answer){
-      if (!solved){
+    if (!solved) {
+      const atTarget = disk.getCodeAtTarget();
+      if (atTarget === level.answer){
         solved = true;
         disk.renderStatus("OK", true);
-      }
-    } else {
-      if (solved){
-        solved = false;
-        disk.renderStatus("?", false);
       }
     }
     requestAnimationFrame(loop);
