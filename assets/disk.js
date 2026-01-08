@@ -1,4 +1,4 @@
- // assets/disk.js
+// assets/disk.js
 // Disku komponents ar 3 grozāmiem riņķiem + 1 fiksētu simbolu gredzenu.
 // Izmanto: window.DiskGameDisk.create({ canvas, targetSlot, symbols })
 
@@ -32,8 +32,11 @@
   function create(opts){
     const canvas = opts.canvas;
     const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    const cx = W/2, cy = H/2;
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
 
     // ===== ārējais fiksētais simbolu gredzens =====
     const symbols = opts.symbols || ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
@@ -61,7 +64,7 @@
     let startAngle = 0;
     let startRingAngle = 0;
 
-    // auto-rotate when not interactive (corner mode)
+    // auto-rotate when not interactive
     let autoAngle = 0;
 
     function ringValueAtSlot(ring, slot){
@@ -78,7 +81,6 @@
     }
 
     function drawFixedOuterRing(){
-      // gredzens
       ctx.beginPath();
       ctx.arc(0,0, fixedRing.r1, 0, TAU);
       ctx.arc(0,0, fixedRing.r0, 0, TAU, true);
@@ -90,7 +92,6 @@
         const a1 = a0 + STEP;
         const mid = (a0+a1)/2;
 
-        // robeža
         ctx.beginPath();
         ctx.moveTo(Math.cos(a0)*fixedRing.r0, Math.sin(a0)*fixedRing.r0);
         ctx.lineTo(Math.cos(a0)*fixedRing.r1, Math.sin(a0)*fixedRing.r1);
@@ -98,7 +99,6 @@
         ctx.strokeStyle = "rgba(255,255,255,.14)";
         ctx.stroke();
 
-        // target highlight + bultiņa
         if(i === targetSlot){
           ctx.save();
           ctx.beginPath();
@@ -108,7 +108,6 @@
           ctx.stroke();
           ctx.restore();
 
-          // bultiņa ārpus gredzena
           ctx.save();
           const r = fixedRing.r1 + 18;
           ctx.translate(Math.cos(mid)*r, Math.sin(mid)*r);
@@ -121,7 +120,6 @@
           ctx.restore();
         }
 
-        // simbols
         const rr = (fixedRing.r0+fixedRing.r1)/2;
         const x = Math.cos(mid)*rr;
         const y = Math.sin(mid)*rr;
@@ -200,9 +198,8 @@
       ctx.translate(cx, cy);
 
       drawFixedOuterRing();
-      rings.forEach(r => drawRing(r));
+      rings.forEach(drawRing);
 
-      // center black
       ctx.beginPath();
       ctx.arc(0,0, center.r, 0, TAU);
       ctx.fillStyle = "#0b0f14";
@@ -210,7 +207,6 @@
 
       drawCenterText(statusText, ok);
 
-      // axle
       ctx.beginPath();
       ctx.arc(0,0, 18, 0, TAU);
       ctx.fillStyle = "#111827";
@@ -223,7 +219,8 @@
     }
 
     function pickRing(x,y){
-      const dx = x - cx, dy = y - cy;
+      const dx = x - cx;
+      const dy = y - cy;
       const r = Math.hypot(dx,dy);
       for(const ring of rings){
         if(r >= ring.r0 && r <= ring.r1) return ring;
@@ -241,20 +238,20 @@
 
     function getPointerPos(e){
       const rect = canvas.getBoundingClientRect();
-      const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-      const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-      const x = (clientX - rect.left) * (canvas.width / rect.width);
-      const y = (clientY - rect.top) * (canvas.height / rect.height);
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
       return {x,y};
     }
 
     function onDown(e){
-      e.stopPropagation();   // <<< DROŠI, PAREIZI, VAJADZĪGI
+      e.stopPropagation();
       if(!interactive) return;
       e.preventDefault();
+
       const {x,y} = getPointerPos(e);
       const ring = pickRing(x,y);
       if(!ring) return;
+
       activeRing = ring;
       startAngle = pointAngle(x,y);
       startRingAngle = ring.angle;
@@ -267,10 +264,10 @@
     function onMove(e){
       if(!activeRing) return;
       e.preventDefault();
+
       const {x,y} = getPointerPos(e);
       const a = pointAngle(x,y);
-      const delta = a - startAngle;
-      activeRing.angle = startRingAngle + delta;
+      activeRing.angle = startRingAngle + (a - startAngle);
     }
 
     function onUp(e){
@@ -278,6 +275,7 @@
       e.preventDefault();
       snapToSector(activeRing);
       activeRing = null;
+
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
@@ -286,29 +284,27 @@
     canvas.addEventListener('pointerdown', onDown, {passive:false});
 
     function tick(){
-  if(!interactive){
-    autoAngle += 0.0022;
-    rings.forEach((r, idx) => r.angle = autoAngle * (1 + idx*0.06));
-    draw("?"); // <- lai vizuāli redz kustību stūrī
-  }
-  requestAnimationFrame(tick);
-}
+      if(!interactive){
+        autoAngle += 0.0022;
+        rings.forEach((r, idx) => {
+          r.angle = autoAngle * (1 + idx * 0.06);
+        });
+      }
+      draw("?");
+      requestAnimationFrame(tick);
+    }
 
     requestAnimationFrame(tick);
 
-    // initial draw
     draw("?");
 
-    // ===== PUBLIC API =====
     return {
       setInteractive(v){ interactive = !!v; },
       setTargetSlot(slot){ targetSlot = ((slot%SECTORS)+SECTORS)%SECTORS; },
       getTargetSlot(){ return targetSlot; },
       getCodeAtTarget(){ return getCodeAtSlot(targetSlot); },
       getCodeAtSlot,
-      // spēle pasaka, ko rādīt centrā
       renderStatus(text, ok){ draw(text, ok); },
-      // ja vajag reset
       reset(){
         rings.forEach(r => r.angle = 0);
         draw("?");
