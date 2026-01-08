@@ -1,18 +1,17 @@
 // assets/disk.js
-// Disku komponents ar 3 grozāmiem riņķiem + 1 fiksētu simbolu gredzenu.
-// + Centrā poga "Pārbaudīt" (klikšķis -> callback).
-// Izmanto: window.DiskGameDisk.create({ canvas, targetSlot, symbols })
+// 3 grozāmi riņķi + fiksēts simbolu gredzens
+// + poga "Pārbaudīt" centrā (klikšķis -> callback)
+// Stabils ciparu nolasījums: tas pats slotu režģis, kas zīmēšanā.
 
 (function(){
   const SECTORS = 9;
   const TAU = Math.PI * 2;
   const STEP = TAU / SECTORS;
+  const START = -Math.PI / 2; // 12:00
 
-  // slot 0 = 12:00
-  // FIX: +1 sektora kompensācija, lai nolasīšana sakrīt ar renderu
-  function angleToTopIndex(angle){
-    const idx = Math.round(-angle / STEP) + 1; // <<< KOMPENSĀCIJA +1
-    return ((idx % SECTORS) + SECTORS) % SECTORS;
+  function norm(a){
+    a = a % TAU;
+    return a < 0 ? a + TAU : a;
   }
 
   function roundRect(ctx, x, y, w, h, r){
@@ -32,34 +31,23 @@
 
     const W = canvas.width;
     const H = canvas.height;
-    const cx = W / 2;
-    const cy = H / 2;
+    const cx = W/2, cy = H/2;
 
     // ===== STATUS (centra teksts) =====
     let statusText = "?";
     let statusOk = false;
 
     // ===== “Pārbaudīt” poga =====
-    // Poga augšā, lai apakšējā kartīte nepārklāj.
-    const checkBtn = {
-      r: 62,
-      y: -62,
-      label: "Pārbaudīt",
-    };
+    const checkBtn = { r: 62, y: -62, label: "Pārbaudīt" };
     let onCheck = null;
 
-    // ===== ārējais fiksētais simbolu gredzens =====
+    // ===== simboli =====
     const symbols = opts.symbols || ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
     let targetSlot = Number.isInteger(opts.targetSlot) ? opts.targetSlot : 0;
 
-    const fixedRing = {
-      r0: 410,
-      r1: 455,
-      color: "#0b0f14",
-      text: "#e5e7eb"
-    };
+    const fixedRing = { r0: 410, r1: 455, color:"#0b0f14", text:"#e5e7eb" };
 
-    // ===== grozāmie riņķi =====
+    // ===== riņķi (ārējais -> iekšējais) =====
     const rings = [
       { name:'white', color:'#f8fafc', text:'#0f172a', r0:300, r1:395, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
       { name:'red',   color:'#d32f2f', text:'#ffffff', r0:220, r1:300, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
@@ -73,20 +61,24 @@
     let activeRing = null;
     let startAngle = 0;
     let startRingAngle = 0;
-
-    // auto-rotate when not interactive
     let autoAngle = 0;
 
-    function ringValueAtSlot(ring, slot){
-      const topIdx = angleToTopIndex(ring.angle);
-      const idx = (topIdx + slot) % SECTORS;
-      return ring.digits[idx];
+    // ✅ STABILS NOLESĪJUMS:
+    // Slotam (0..8) paņemam tā sektora vidus leņķi pasaulē,
+    // pārceļam uz ringa lokālo telpu (atņemot ring.angle),
+    // un atrodam, kurš i indekss tam atbilst.
+    function digitAtSlot(ring, slot){
+      const worldMid = START + slot*STEP + STEP/2;   // slot sektora vidus
+      const local = norm(worldMid - ring.angle);     // ringa lokālais leņķis
+      const rel = norm(local - START);               // pret START
+      const i = Math.floor(rel / STEP) % SECTORS;    // sektora indekss
+      return ring.digits[i];
     }
 
     function getCodeAtSlot(slot){
-      const a = ringValueAtSlot(rings[0], slot);
-      const b = ringValueAtSlot(rings[1], slot);
-      const c = ringValueAtSlot(rings[2], slot);
+      const a = digitAtSlot(rings[0], slot); // white
+      const b = digitAtSlot(rings[1], slot); // red
+      const c = digitAtSlot(rings[2], slot); // blue
       return `${a}${b}${c}`;
     }
 
@@ -98,7 +90,7 @@
       ctx.fill("evenodd");
 
       for(let i=0;i<SECTORS;i++){
-        const a0 = i*STEP + (-Math.PI/2);
+        const a0 = i*STEP + START;
         const a1 = a0 + STEP;
         const mid = (a0+a1)/2;
 
@@ -154,7 +146,7 @@
       ctx.rotate(ring.angle);
 
       for(let i=0;i<SECTORS;i++){
-        const a0 = i*STEP + (-Math.PI/2);
+        const a0 = i*STEP + START;
         const a1 = a0 + STEP;
 
         ctx.beginPath();
@@ -211,7 +203,7 @@
       ctx.textBaseline = "middle";
       ctx.fillText(statusText, 26, -6);
 
-      // “Pārbaudīt” poga (tikai, kad interactive)
+      // Poga “Pārbaudīt” (tikai, kad interactive)
       if (interactive){
         ctx.save();
         ctx.beginPath();
@@ -260,8 +252,7 @@
     }
 
     function pickRing(x,y){
-      const dx = x - cx;
-      const dy = y - cy;
+      const dx = x - cx, dy = y - cy;
       const r = Math.hypot(dx,dy);
       for(const ring of rings){
         if(r >= ring.r0 && r <= ring.r1) return ring;
@@ -311,7 +302,6 @@
     function onMove(e){
       if(!activeRing) return;
       e.preventDefault();
-
       const {x,y} = getPointerPos(e);
       activeRing.angle = startRingAngle + (pointAngle(x,y) - startAngle);
     }
@@ -319,7 +309,6 @@
     function onUp(e){
       if(!activeRing) return;
       e.preventDefault();
-
       snapToSector(activeRing);
       activeRing = null;
 
@@ -333,9 +322,7 @@
     function tick(){
       if(!interactive){
         autoAngle += 0.0022;
-        rings.forEach((r, idx) => {
-          r.angle = autoAngle * (1 + idx * 0.06);
-        });
+        rings.forEach((r, idx) => r.angle = autoAngle * (1 + idx*0.06));
       }
       draw();
       requestAnimationFrame(tick);
@@ -348,13 +335,8 @@
       getTargetSlot(){ return targetSlot; },
       getCodeAtTarget(){ return getCodeAtSlot(targetSlot); },
       getCodeAtSlot,
-      renderStatus(text, ok){
-        statusText = text;
-        statusOk = !!ok;
-      },
-      setOnCheck(fn){
-        onCheck = (typeof fn === "function") ? fn : null;
-      }
+      renderStatus(text, ok){ statusText = text; statusOk = !!ok; },
+      setOnCheck(fn){ onCheck = (typeof fn === "function") ? fn : null; }
     };
   }
 
