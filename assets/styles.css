@@ -166,3 +166,18 @@ html,body{ height:100%; margin:0; overflow:hidden; font-family: system-ui, -appl
   .task-card{ width: min(88vw, 360px); right: 12px; bottom: 12px; }
   .hud{ left: 12px; bottom: 12px; }
 }
+
+/* ===== FIX: ļaut diskam saņemt pointer eventus ===== */
+
+.disk-shell {
+  pointer-events: auto;
+}
+
+.disk-shell.open {
+  pointer-events: none;   /* shell pats vairs neķer klikšķus */
+}
+
+.disk-shell.open canvas {
+  pointer-events: auto;   /* BET canvas IR aktīvs */
+  touch-action: none;     /* mobilajam */
+}
