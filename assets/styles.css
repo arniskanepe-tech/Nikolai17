@@ -150,3 +150,6 @@ html,body{
     bottom: 12px;
   }
 }
+.disk-center{
+  z-index: 10;
+}
