@@ -8,10 +8,10 @@
   const TAU = Math.PI * 2;
   const STEP = TAU / SECTORS;
 
-  // slot 0 = 12:00 (tas pats, ko tu redzi augšā)
-  // FIX: pareiza indeksēšana, lai redzamais cipars sakrīt ar getCodeAtTarget()
+  // slot 0 = 12:00
+  // FIX: +1 sektora kompensācija, lai nolasīšana sakrīt ar renderu
   function angleToTopIndex(angle){
-    const idx = Math.round(-angle / STEP);
+    const idx = Math.round(-angle / STEP) + 1; // <<< KOMPENSĀCIJA +1
     return ((idx % SECTORS) + SECTORS) % SECTORS;
   }
 
@@ -278,7 +278,6 @@
     }
 
     function isCheckButtonHit(x,y){
-      // poga lokāli (0, checkBtn.y) => globāli (cx, cy + checkBtn.y)
       const dx = x - cx;
       const dy = y - (cy + checkBtn.y);
       return Math.hypot(dx,dy) <= checkBtn.r;
