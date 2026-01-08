@@ -1,5 +1,5 @@
 :root{
-  --disk-size: min(22vw, 210px);      /* stūrī */
+  --disk-size: min(11vw, 105px);      /* stūrī (2x mazāks) */
   --disk-size-active: min(70vw, 560px); /* centrā */
   --pad: 18px;
 }
@@ -9,7 +9,7 @@ html,body{ height:100%; margin:0; overflow:hidden; font-family: system-ui, -appl
 
 .scene{
   position:relative;
-  height:100svh;
+  height:100%;
   min-height:100vh;
   width:100%;
   overflow:hidden;
@@ -40,7 +40,7 @@ html,body{ height:100%; margin:0; overflow:hidden; font-family: system-ui, -appl
 
 .disk-shell canvas{
   width:100%;
-  height:100svh;
+  height:100%;
   min-height:100vh;
   display:block;
   border-radius: 999px;
@@ -94,6 +94,8 @@ html,body{ height:100%; margin:0; overflow:hidden; font-family: system-ui, -appl
   z-index: 6;
   box-shadow: 0 20px 60px rgba(0,0,0,.35);
   backdrop-filter: blur(6px);
+
+  pointer-events:none;
 }
 
 .card-header{
