@@ -47,11 +47,10 @@
     disk.setInteractive(false);
   }
 
-  // Klikšķis uz diska atver (tikai stūrī)
-  diskShell.addEventListener("click", (e) => {
-    // Kad disks jau atvērts, klikšķis netraucē griešanai.
-    if (isOpen) return;
-    openDisk();
+  // Klikšķis uz diska atver TIKAI stūra režīmā
+   diskShell.addEventListener("click", (e) => {
+    if (!diskShell.classList.contains("disk-corner")) return;
+   openDisk();
   });
 
   // Klikšķis ārpus diska aizver
