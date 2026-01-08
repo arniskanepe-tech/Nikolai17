@@ -1,5 +1,6 @@
 // assets/disk.js
 // Disku komponents ar 3 grozāmiem riņķiem + 1 fiksētu simbolu gredzenu.
+// + Centrā poga "Pārbaudīt" (klikšķis -> callback).
 // Izmanto: window.DiskGameDisk.create({ canvas, targetSlot, symbols })
 
 (function(){
@@ -38,13 +39,15 @@
     const cx = W / 2;
     const cy = H / 2;
 
-    // ===== STATUS (CENTRA TEKSTS) =====
+    // ===== STATUS (centra teksts) =====
     let statusText = "?";
     let statusOk = false;
 
     // ===== “Pārbaudīt” poga =====
+    // Poga ir pārbīdīta uz AUGŠU, lai kartīte apakšā nekad nepārklāj.
     const checkBtn = {
-      r: 62, // klikšķa rādiuss (iekš melnā centra)
+      r: 62,
+      y: -62, // <<< te ir atslēga (augšā)
       label: "Pārbaudīt",
     };
     let onCheck = null;
@@ -103,6 +106,7 @@
         const a1 = a0 + STEP;
         const mid = (a0+a1)/2;
 
+        // robeža
         ctx.beginPath();
         ctx.moveTo(Math.cos(a0)*fixedRing.r0, Math.sin(a0)*fixedRing.r0);
         ctx.lineTo(Math.cos(a0)*fixedRing.r1, Math.sin(a0)*fixedRing.r1);
@@ -110,6 +114,7 @@
         ctx.strokeStyle = "rgba(255,255,255,.14)";
         ctx.stroke();
 
+        // target highlight
         if(i === targetSlot){
           ctx.save();
           ctx.beginPath();
@@ -118,8 +123,21 @@
           ctx.strokeStyle = "rgba(212,162,74,.95)";
           ctx.stroke();
           ctx.restore();
+
+          // bultiņa ārpus gredzena
+          ctx.save();
+          const r = fixedRing.r1 + 18;
+          ctx.translate(Math.cos(mid)*r, Math.sin(mid)*r);
+          ctx.rotate(mid + Math.PI/2);
+          ctx.fillStyle = "rgba(212,162,74,.98)";
+          ctx.font = "900 26px system-ui";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("▼", 0, 0);
+          ctx.restore();
         }
 
+        // simbols
         const rr = (fixedRing.r0+fixedRing.r1)/2;
         const x = Math.cos(mid)*rr;
         const y = Math.sin(mid)*rr;
@@ -181,7 +199,7 @@
       ctx.fillStyle = "#0b0f14";
       ctx.fill();
 
-      // status “lapiņa”
+      // status plāksnīte
       ctx.save();
       ctx.rotate(0.45);
       roundRect(ctx, -78, -40, 156, 80, 14);
@@ -198,11 +216,11 @@
       ctx.textBaseline = "middle";
       ctx.fillText(statusText, 26, -6);
 
-      // “Pārbaudīt” poga (tikai, kad ir interactive)
+      // “Pārbaudīt” poga (tikai, kad interactive)
       if (interactive){
         ctx.save();
         ctx.beginPath();
-        ctx.arc(0, 62, checkBtn.r, 0, TAU);
+        ctx.arc(0, checkBtn.y, checkBtn.r, 0, TAU);
         ctx.fillStyle = "rgba(255,255,255,0.10)";
         ctx.fill();
         ctx.lineWidth = 3;
@@ -213,7 +231,7 @@
         ctx.font = "800 20px system-ui";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(checkBtn.label, 0, 62);
+        ctx.fillText(checkBtn.label, 0, checkBtn.y);
         ctx.restore();
       }
     }
@@ -226,6 +244,15 @@
       drawFixedOuterRing();
       rings.forEach(drawRing);
       drawCenter();
+
+      // axle
+      ctx.beginPath();
+      ctx.arc(0,0, 18, 0, TAU);
+      ctx.fillStyle = "#111827";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#0f172a";
+      ctx.stroke();
 
       ctx.restore();
     }
@@ -256,9 +283,9 @@
     }
 
     function isCheckButtonHit(x,y){
-      // pogu zīmējam pie (0, +62) lokāli, tātad globāli: (cx, cy+62)
+      // poga lokāli ir (0, checkBtn.y), globāli (cx, cy + checkBtn.y)
       const dx = x - cx;
-      const dy = y - (cy + 62);
+      const dy = y - (cy + checkBtn.y);
       return Math.hypot(dx,dy) <= checkBtn.r;
     }
 
@@ -269,7 +296,7 @@
 
       const {x,y} = getPointerPos(e);
 
-      // ja uzspiež centrā “Pārbaudīt” pogu
+      // Poga “Pārbaudīt”
       if (isCheckButtonHit(x,y)){
         if (typeof onCheck === "function") onCheck();
         return;
@@ -298,6 +325,7 @@
     function onUp(e){
       if(!activeRing) return;
       e.preventDefault();
+
       snapToSector(activeRing);
       activeRing = null;
 
@@ -320,6 +348,7 @@
     }
     requestAnimationFrame(tick);
 
+    // ===== PUBLIC API =====
     return {
       setInteractive(v){ interactive = !!v; },
       setTargetSlot(slot){ targetSlot = ((slot%SECTORS)+SECTORS)%SECTORS; },
