@@ -1,0 +1,165 @@
+:root{
+  --disk-size: min(22vw, 210px);      /* stūrī */
+  --disk-size-active: min(70vw, 560px); /* centrā */
+  --pad: 18px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+
+.scene{
+  position:relative;
+  height:100%;
+  width:100%;
+  overflow:hidden;
+  background: url("bg.jpg") center / cover no-repeat;
+}
+
+/* viegla “vignette”, lai UI labāk salasāms uz bildes */
+.scene::after{
+  content:"";
+  position:absolute; inset:0;
+  background: radial-gradient(circle at 50% 20%, rgba(0,0,0,0.05), rgba(0,0,0,0.35));
+  pointer-events:none;
+}
+
+/* ===== DISKS ===== */
+.disk-shell{
+  position:absolute;
+  width: var(--disk-size);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  z-index: 5;
+  cursor: pointer;
+  user-select:none;
+  touch-action:none;
+  transition: transform .8s ease, width .8s ease, top .8s ease, left .8s ease;
+  filter: drop-shadow(0 18px 40px rgba(0,0,0,.35));
+}
+
+.disk-shell canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  border-radius: 999px;
+}
+
+/* stūrī */
+.disk-corner{
+  top: var(--pad);
+  left: var(--pad);
+  transform: translate(0,0) scale(1);
+}
+
+/* centrā */
+.disk-center{
+  top: 50%;
+  left: 50%;
+  width: var(--disk-size-active);
+  transform: translate(-50%, -50%) scale(1);
+  cursor: grab;
+}
+
+.disk-center:active{ cursor: grabbing; }
+
+.disk-hint{
+  position:absolute;
+  left:50%;
+  bottom:-10px;
+  transform: translate(-50%, 100%);
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  opacity: .95;
+  white-space: nowrap;
+  pointer-events:none;
+}
+
+.disk-center .disk-hint{ display:none; }
+
+/* ===== KĀRTS ===== */
+.task-card{
+  position:absolute;
+  right: var(--pad);
+  bottom: var(--pad);
+  width: min(28vw, 320px);
+  max-width: 92vw;
+  background: rgba(255,255,255,0.94);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  z-index: 6;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+}
+
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.card-title{ font-weight: 800; font-size: 16px; }
+.card-subtitle{ font-weight: 700; font-size: 13px; opacity:.75; }
+
+.card-body p{ margin: 8px 0; }
+.muted{ opacity:.7; font-size: 13px; }
+
+.card-actions{
+  display:flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.code-input{
+  flex: 1;
+  border: 1px solid rgba(15,23,42,.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+}
+.code-input:focus{
+  border-color: rgba(37,99,235,.55);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.18);
+}
+
+.btn{
+  border: 0;
+  background: #111827;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor:pointer;
+}
+.btn:active{ transform: translateY(1px); }
+
+.card-feedback{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15,23,42,.06);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* HUD (debug) */
+.hud{
+  position:absolute;
+  left: var(--pad);
+  bottom: var(--pad);
+  z-index: 6;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* mobilajā kārti nedaudz mazāku */
+@media (max-width: 520px){
+  .task-card{ width: min(88vw, 360px); right: 12px; bottom: 12px; }
+  .hud{ left: 12px; bottom: 12px; }
+}
