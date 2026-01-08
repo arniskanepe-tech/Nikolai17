@@ -33,21 +33,34 @@
 
   // click uz diska -> uz centru / atpakaļ uz stūri
   diskShell.addEventListener("click", (e) => {
-    // ja klikšķis bija uz input/kārts, ignorē
+    // Atveram ar klikšķi tikai tad, ja disks ir stūrī.
+    // Kad disks ir atvērts, klikšķis uz diska netraucē “drag” grozīšanai.
+    if (e.target.closest(".task-card")) return;
+    if (isOpen) return;
+
+    isOpen = true;
+    diskShell.classList.add("disk-center");
+    diskShell.classList.remove("disk-corner");
+
+    disk.setInteractive(true);
+    feedback.textContent = `Uzgriez kodu pretī simbolam ${level.symbols[level.targetSlot]} un spied “Pārbaudīt”.`;
+
+    // fokusē input (ērti uz datora)
+    setTimeout(() => codeInput.focus(), 350);
+  });
+
+  // Klikšķis ārpus diska/kārts aizver disku (atgriež stūrī)
+  document.addEventListener("click", (e) => {
+    if (!isOpen) return;
+    if (e.target.closest("#diskShell")) return;
     if (e.target.closest(".task-card")) return;
 
-    isOpen = !isOpen;
-    diskShell.classList.toggle("disk-center", isOpen);
-    diskShell.classList.toggle("disk-corner", !isOpen);
-
-    disk.setInteractive(isOpen);
-    feedback.textContent = isOpen
-      ? `Uzgriez kodu pretī simbolam ${level.symbols[level.targetSlot]} un spied “Pārbaudīt”.`
-      : "—";
-
-    // kad atver, fokusē input (ērti uz datora)
-    if (isOpen) setTimeout(() => codeInput.focus(), 350);
-  });
+    isOpen = false;
+    diskShell.classList.remove("disk-center");
+    diskShell.classList.add("disk-corner");
+    disk.setInteractive(false);
+    feedback.textContent = "—";
+  }, { capture: true });
 
   // ierobežojam ievadi uz cipariem
   codeInput.addEventListener("input", () => {
