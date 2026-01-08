@@ -1,4 +1,4 @@
-// assets/disk.js
+ // assets/disk.js
 // Disku komponents ar 3 grozāmiem riņķiem + 1 fiksētu simbolu gredzenu.
 // Izmanto: window.DiskGameDisk.create({ canvas, targetSlot, symbols })
 
@@ -249,6 +249,7 @@
     }
 
     function onDown(e){
+      e.stopPropagation();   // <<< DROŠI, PAREIZI, VAJADZĪGI
       if(!interactive) return;
       e.preventDefault();
       const {x,y} = getPointerPos(e);
