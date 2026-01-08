@@ -3,7 +3,7 @@
   const level = {
     id: 1,
     answer: "345",
-    targetSlot: 0,
+    targetSlot: 1,
     symbols: ["★","☾","▲","◆","✚","⬣","⬟","●","▣"],
   };
 
