@@ -1,10 +1,8 @@
 // assets/game.js
 (() => {
-  // ===== Level 1 (tests) =====
   const level = {
     id: 1,
     answer: "345",
-    // 0..8, 0 = augšā (12:00)
     targetSlot: 0,
     symbols: ["★","☾","▲","◆","✚","⬣","⬟","●","▣"],
   };
@@ -22,7 +20,6 @@
 
   targetSymbolLabel.textContent = level.symbols[level.targetSlot];
 
-  // Sākumā: stūrī, tikai auto-rotate
   let isOpen = false;
   let solved = false;
 
@@ -38,12 +35,9 @@
 
     disk.setInteractive(true);
 
-    // ja jau atrisināts, rādām OK; ja nē, tad ?
-    disk.renderStatus(solved ? "OK" : "?", solved);
-
     feedback.innerHTML =
       `Uzgriez disku, līdz pretī mērķa simbolam <strong>${level.symbols[level.targetSlot]}</strong> redzi kodu <strong>${level.answer}</strong>. ` +
-      `Kad pareizi — centrā parādīsies <strong>OK</strong>.`;
+      `Kad esi gatavs, spied centrā <strong>Pārbaudīt</strong>.`;
   }
 
   function closeDisk(){
@@ -54,32 +48,32 @@
     diskShell.classList.remove("disk-center");
 
     disk.setInteractive(false);
-    // stūrī atstāj kā ir (auto-rotate), solved statusu nemainām
   }
 
-  // Klikšķis uz diska atver TIKAI stūra režīmā
-  diskShell.addEventListener("click", (e) => {
+  // atver tikai stūrī
+  diskShell.addEventListener("click", () => {
     if (!diskShell.classList.contains("disk-corner")) return;
     openDisk();
   });
 
-  // Klikšķis ārpus diska aizver
+  // klikšķis ārpus diska aizver
   document.addEventListener("pointerdown", (e) => {
     if (!isOpen) return;
     if (diskShell.contains(e.target)) return;
     closeDisk();
   });
 
-  // Pārbaude: ja kods sakrīt -> fiksē OK (neatceļam vairs)
-  function loop(){
-    if (!solved) {
-      const atTarget = disk.getCodeAtTarget();
-      if (atTarget === level.answer){
-        solved = true;
-        disk.renderStatus("OK", true);
-      }
+  // POGA “Pārbaudīt” -> te notiek salīdzināšana
+  disk.setOnCheck(() => {
+    if (!isOpen) return;
+
+    const atTarget = disk.getCodeAtTarget();
+    if (atTarget === level.answer){
+      solved = true;
+      disk.renderStatus("OK", true);
+    } else {
+      solved = false;
+      disk.renderStatus("NĒ", false); // vari mainīt uz "X" vai "NO"
     }
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+  });
 })();
