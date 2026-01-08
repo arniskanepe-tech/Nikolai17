@@ -38,6 +38,10 @@
     const cx = W / 2;
     const cy = H / 2;
 
+    // ===== STATUS (CENTRA TEKSTS) =====
+    let statusText = "?";
+    let statusOk = false;
+
     // ===== ārējais fiksētais simbolu gredzens =====
     const symbols = opts.symbols || ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
     let targetSlot = Number.isInteger(opts.targetSlot) ? opts.targetSlot : 0;
@@ -107,17 +111,6 @@
           ctx.strokeStyle = "rgba(212,162,74,.95)";
           ctx.stroke();
           ctx.restore();
-
-          ctx.save();
-          const r = fixedRing.r1 + 18;
-          ctx.translate(Math.cos(mid)*r, Math.sin(mid)*r);
-          ctx.rotate(mid + Math.PI/2);
-          ctx.fillStyle = "rgba(212,162,74,.98)";
-          ctx.font = "900 26px system-ui";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("▼", 0, 0);
-          ctx.restore();
         }
 
         const rr = (fixedRing.r0+fixedRing.r1)/2;
@@ -174,7 +167,7 @@
       ctx.restore();
     }
 
-    function drawCenterText(text, ok){
+    function drawCenterText(){
       ctx.save();
       ctx.rotate(0.45);
       roundRect(ctx, -78, -40, 156, 80, 14);
@@ -185,14 +178,14 @@
       ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = ok ? "#34d399" : "#e5e7eb";
-      ctx.font = ok ? "900 54px system-ui" : "900 58px system-ui";
+      ctx.fillStyle = statusOk ? "#34d399" : "#e5e7eb";
+      ctx.font = statusOk ? "900 54px system-ui" : "900 58px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, 26, -6);
+      ctx.fillText(statusText, 26, -6);
     }
 
-    function draw(statusText="?", ok=false){
+    function draw(){
       ctx.clearRect(0,0,W,H);
       ctx.save();
       ctx.translate(cx, cy);
@@ -205,15 +198,7 @@
       ctx.fillStyle = "#0b0f14";
       ctx.fill();
 
-      drawCenterText(statusText, ok);
-
-      ctx.beginPath();
-      ctx.arc(0,0, 18, 0, TAU);
-      ctx.fillStyle = "#111827";
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#0f172a";
-      ctx.stroke();
+      drawCenterText();
 
       ctx.restore();
     }
@@ -264,10 +249,8 @@
     function onMove(e){
       if(!activeRing) return;
       e.preventDefault();
-
       const {x,y} = getPointerPos(e);
-      const a = pointAngle(x,y);
-      activeRing.angle = startRingAngle + (a - startAngle);
+      activeRing.angle = startRingAngle + (pointAngle(x,y) - startAngle);
     }
 
     function onUp(e){
@@ -290,13 +273,11 @@
           r.angle = autoAngle * (1 + idx * 0.06);
         });
       }
-      draw("?");
+      draw();
       requestAnimationFrame(tick);
     }
 
     requestAnimationFrame(tick);
-
-    draw("?");
 
     return {
       setInteractive(v){ interactive = !!v; },
@@ -304,13 +285,9 @@
       getTargetSlot(){ return targetSlot; },
       getCodeAtTarget(){ return getCodeAtSlot(targetSlot); },
       getCodeAtSlot,
-      renderStatus(text, ok){ draw(text, ok); },
-      reset(){
-        rings.forEach(r => r.angle = 0);
-        draw("?");
-      },
-      random(){
-        rings.forEach(r => r.angle = (Math.floor(Math.random()*SECTORS) * STEP));
+      renderStatus(text, ok){
+        statusText = text;
+        statusOk = !!ok;
       }
     };
   }
