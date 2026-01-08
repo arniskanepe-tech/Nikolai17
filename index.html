@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rotējošs disks</title>
+  <style>
+    :root { --size: min(92vw, 520px); }
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:#f3f4f6;
+    }
+    .wrap{ display:grid; gap:12px; justify-items:center; padding:16px; }
+    .stage{
+      width:var(--size); aspect-ratio:1/1;
+      position:relative; border-radius:50%;
+      background: radial-gradient(circle at 30% 20%, #fff, #e9ecef 70%, #dfe3e8);
+      box-shadow: 0 14px 40px rgba(0,0,0,.18);
+      touch-action:none;
+      user-select:none;
+    }
+    canvas{ width:100%; height:100%; display:block; border-radius:50%; }
+    .pill{
+      padding:6px 10px; border-radius:999px; background:#fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,.10);
+      font-size:14px;
+    }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    button{
+      border:0; border-radius:10px; padding:10px 12px;
+      background:#111827; color:#fff; cursor:pointer;
+    }
+    button.secondary{ background:#374151; }
+    .hint{ font-size:14px; opacity:.8; text-align:center; max-width:520px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stage" id="stage">
+      <canvas id="c" width="900" height="900"></canvas>
+    </div>
+
+    <div class="row"><div class="pill" id="stateText">—</div></div>
+
+    <div class="row">
+      <button id="reset">Reset</button>
+      <button class="secondary" id="random">Random</button>
+    </div>
+
+    <div class="hint">
+      Grozi riņķus ar pirkstu: balts (ārējais), sarkans (vidējais), zils (iekšējais).
+      Centrā cipars ir demo loģika.
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const stage = document.getElementById('stage');
+  const stateText = document.getElementById('stateText');
+
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+
+  const SECTORS = 9;
+  const STEP = (Math.PI*2)/SECTORS;
+
+  const rings = [
+    { name:'white', color:'#f8fafc', text:'#0f172a', r0:315, r1:410, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+    { name:'red',   color:'#d32f2f', text:'#ffffff', r0:230, r1:315, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+    { name:'blue',  color:'#1e88e5', text:'#0b1020', r0:145, r1:230, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+  ];
+
+  const center = { r:145, holeR:62 };
+
+  function normAngle(a){
+    const t = Math.PI*2;
+    a = a % t;
+    return (a < 0) ? a + t : a;
+  }
+
+  function angleToIndex(angle){
+    const a = normAngle(angle - (-Math.PI/2));
+    return (Math.round(a / STEP) % SECTORS);
+  }
+
+  function ringValueAtTop(ring){
+    const idx = angleToIndex(ring.angle);
+    return ring.digits[idx];
+  }
+
+  function computeCenterDigit(){
+    const a = ringValueAtTop(rings[0]);
+    const b = ringValueAtTop(rings[1]);
+    const c = ringValueAtTop(rings[2]);
+    return (a + b + c) % 10; // demo
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawRing(ring){
+    ctx.save();
+    ctx.rotate(ring.angle);
+
+    for(let i=0;i<SECTORS;i++){
+      const a0 = i*STEP + (-Math.PI/2);
+      const a1 = a0 + STEP;
+
+      ctx.beginPath();
+      ctx.arc(0,0, ring.r1, a0, a1);
+      ctx.arc(0,0, ring.r0, a1, a0, true);
+      ctx.closePath();
+      ctx.fillStyle = ring.color;
+      ctx.fill();
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(0,0,0,.28)";
+      ctx.stroke();
+
+      const mid = (a0+a1)/2;
+      const rr = (ring.r0+ring.r1)/2;
+      const x = Math.cos(mid)*rr;
+      const y = Math.sin(mid)*rr;
+
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(mid + Math.PI/2);
+      ctx.fillStyle = ring.text;
+      ctx.font = "bold 42px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(ring.digits[i]), 0, 0);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.beginPath();
+    ctx.arc(0,0, 430, 0, Math.PI*2);
+    ctx.fillStyle = "#0b0f14";
+    ctx.fill();
+
+    rings.forEach(r => drawRing(r));
+
+    ctx.beginPath();
+    ctx.arc(0,0, center.r, 0, Math.PI*2);
+    ctx.fillStyle = "#0b0f14";
+    ctx.fill();
+
+    ctx.save();
+    ctx.rotate(0.45);
+    roundRect(ctx, -70, -35, 140, 70, 12);
+    ctx.fillStyle = "#101826";
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "#d4a24a";
+    ctx.stroke();
+    ctx.restore();
+
+    const out = computeCenterDigit();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "bold 56px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(out), 25, -5);
+
+    ctx.beginPath();
+    ctx.arc(0,0, 18, 0, Math.PI*2);
+    ctx.fillStyle = "#111827";
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#0f172a";
+    ctx.stroke();
+
+    ctx.restore();
+
+    const v0 = ringValueAtTop(rings[0]);
+    const v1 = ringValueAtTop(rings[1]);
+    const v2 = ringValueAtTop(rings[2]);
+    stateText.textContent = `Augšā: balts=${v0} | sarkans=${v1} | zils=${v2} → centrs=${out}`;
+  }
+
+  // --- touch/mouse rotācija
+  let activeRing = null;
+  let startAngle = 0;
+  let startRingAngle = 0;
+
+  function getPointerPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
+    return {x,y};
+  }
+
+  function pickRing(x,y){
+    const dx = x - cx, dy = y - cy;
+    const r = Math.hypot(dx,dy);
+    for(const ring of rings){
+      if(r >= ring.r0 && r <= ring.r1) return ring;
+    }
+    return null;
+  }
+
+  function pointAngle(x,y){
+    return Math.atan2(y - cy, x - cx);
+  }
+
+  function snapToSector(ring){
+    ring.angle = Math.round(ring.angle / STEP) * STEP;
+  }
+
+  function onDown(e){
+    e.preventDefault();
+    const {x,y} = getPointerPos(e);
+    const ring = pickRing(x,y);
+    if(!ring) return;
+    activeRing = ring;
+    startAngle = pointAngle(x,y);
+    startRingAngle = ring.angle;
+
+    window.addEventListener('pointermove', onMove, {passive:false});
+    window.addEventListener('pointerup', onUp, {passive:false});
+    window.addEventListener('pointercancel', onUp, {passive:false});
+  }
+
+  function onMove(e){
+    if(!activeRing) return;
+    e.preventDefault();
+    const {x,y} = getPointerPos(e);
+    const a = pointAngle(x,y);
+    const delta = a - startAngle;
+    activeRing.angle = startRingAngle + delta;
+    draw();
+  }
+
+  function onUp(e){
+    if(!activeRing) return;
+    e.preventDefault();
+    snapToSector(activeRing);
+    activeRing = null;
+    draw();
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+  }
+
+  stage.addEventListener('pointerdown', onDown, {passive:false});
+
+  document.getElementById('reset').addEventListener('click', () => {
+    rings.forEach(r => r.angle = 0);
+    draw();
+  });
+  document.getElementById('random').addEventListener('click', () => {
+    rings.forEach(r => r.angle = (Math.floor(Math.random()*SECTORS) * STEP));
+    draw();
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>
