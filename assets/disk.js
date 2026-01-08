@@ -293,6 +293,8 @@
   requestAnimationFrame(tick);
 }
 
+    requestAnimationFrame(tick);
+
     // initial draw
     draw("?");
 
