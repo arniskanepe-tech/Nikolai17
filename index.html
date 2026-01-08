@@ -3,358 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rotējošs disks (ar mērķa simbolu)</title>
-  <style>
-    :root { --size: min(92vw, 560px); }
-    body{
-      margin:0; min-height:100vh; display:grid; place-items:center;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:#f3f4f6;
-    }
-    .wrap{ display:grid; gap:12px; justify-items:center; padding:16px; }
-    .stage{
-      width:var(--size); aspect-ratio:1/1;
-      position:relative; border-radius:50%;
-      background: radial-gradient(circle at 30% 20%, #fff, #e9ecef 70%, #dfe3e8);
-      box-shadow: 0 14px 40px rgba(0,0,0,.18);
-      touch-action:none;
-      user-select:none;
-    }
-    canvas{ width:100%; height:100%; display:block; border-radius:50%; }
-    .pill{
-      padding:6px 10px; border-radius:999px; background:#fff;
-      box-shadow: 0 6px 16px rgba(0,0,0,.10);
-      font-size:14px;
-    }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-    button{
-      border:0; border-radius:10px; padding:10px 12px;
-      background:#111827; color:#fff; cursor:pointer;
-    }
-    button.secondary{ background:#374151; }
-    .hint{ font-size:14px; opacity:.8; text-align:center; max-width:560px; }
-  </style>
+  <title>Disku spēle — 1. lapa</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="stage" id="stage">
-      <canvas id="c" width="1000" height="1000"></canvas>
+
+  <main class="scene" id="scene">
+    <!-- DISKS (sākumā stūrī, lēni griežas) -->
+    <div class="disk-shell disk-corner" id="diskShell" aria-label="Disk">
+      <canvas id="diskCanvas" width="900" height="900"></canvas>
+
+      <!-- mazs “hint”, kas parādās tikai stūrī -->
+      <div class="disk-hint">Klikšķini, lai atvērtu</div>
     </div>
 
-    <div class="row"><div class="pill" id="stateText">—</div></div>
+    <!-- KĀRTS -->
+    <section class="task-card" id="taskCard" aria-label="Kārts">
+      <div class="card-header">
+        <div class="card-title">Uzdevums #1</div>
+        <div class="card-subtitle">Mērķis: <span id="targetSymbolLabel">★</span></div>
+      </div>
 
-    <div class="row">
-      <button id="reset">Reset</button>
-      <button class="secondary" id="random">Random</button>
-    </div>
+      <div class="card-body">
+        <p>Kas par fantastisku Gadu Secību bijusi.</p>
+        <p><strong>Pareizā atbilde šoreiz būs 345.</strong></p>
+        <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
+      </div>
 
-    <div class="hint">
-      Grozi 3 riņķus. Tagad kods jāsaliek <b>pretī mērķa simbolam</b> (ārējais fiksētais aplis, I–IX).<br>
-      Ja kods (piem. 345) ir pareizi pretī mērķim → centrā parādās <b>OK</b>.
-    </div>
-  </div>
+      <div class="card-actions">
+        <input id="codeInput" class="code-input" inputmode="numeric" maxlength="3" placeholder="Ieraksti kodu (piem. 345)" />
+        <button id="checkBtn" class="btn">Pārbaudīt</button>
+      </div>
 
-<script>
-(() => {
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
-  const stage = document.getElementById('stage');
-  const stateText = document.getElementById('stateText');
+      <div class="card-feedback" id="feedback">—</div>
+    </section>
 
-  const W = canvas.width, H = canvas.height;
-  const cx = W/2, cy = H/2;
+    <!-- Mazs info debug (vari pēc tam izņemt) -->
+    <div class="hud" id="hud">—</div>
+  </main>
 
-  const SECTORS = 9;
-  const STEP = (Math.PI*2)/SECTORS;
-
-  // ====== SPĒLES MAINĪGIE (pagaidām hardcode vienai kārtij) ======
-  const ANSWER_CODE = "345";
-  // 0..8 (0 = 12:00). 0 nozīmē "I" augšā. Vari mainīt pēc kārtīm.
-  const TARGET_SLOT = 0;
-
-  // Fiksētā ārējā apļa “simboli” (vari nomainīt uz ikonām ⭐🌙▲ utt.)
-  const SYMBOLS = ["I","II","III","IV","V","VI","VII","VIII","IX"];
-
-  // ====== Riņķi (grozāmie) ======
-  const rings = [
-    { name:'white', color:'#f8fafc', text:'#0f172a', r0:355, r1:470, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
-    { name:'red',   color:'#d32f2f', text:'#ffffff', r0:255, r1:355, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
-    { name:'blue',  color:'#1e88e5', text:'#0b1020', r0:160, r1:255, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
-  ];
-
-  // Melnais centrs ar “logu”
-  const center = { r:160 };
-
-  // ====== Outer fixed ring (non-rotating) ======
-  const fixedRing = {
-    r0: 470,
-    r1: 520,
-    color: "#0b0f14",
-    text: "#e5e7eb"
-  };
-
-  function normAngle(a){
-    const t = Math.PI*2;
-    a = a % t;
-    return (a < 0) ? a + t : a;
-  }
-
-  // Digit at TOP slot (slot 0, 12:00)
-  function angleToTopIndex(angle){
-    const a = normAngle(angle - (-Math.PI/2));
-    return (Math.round(a / STEP) % SECTORS);
-  }
-
-  // Digit at arbitrary slot (0..8, clockwise starting at top)
-  function ringValueAtSlot(ring, slot){
-    const topIdx = angleToTopIndex(ring.angle);
-    const idx = (topIdx + slot) % SECTORS;
-    return ring.digits[idx];
-  }
-
-  function getCodeAtSlot(slot){
-    const a = ringValueAtSlot(rings[0], slot);
-    const b = ringValueAtSlot(rings[1], slot);
-    const c = ringValueAtSlot(rings[2], slot);
-    return `${a}${b}${c}`;
-  }
-
-  function isCorrect(){
-    return getCodeAtSlot(TARGET_SLOT) === ANSWER_CODE;
-  }
-
-  function roundRect(ctx, x, y, w, h, r){
-    const rr = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y, x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x, y+h, rr);
-    ctx.arcTo(x, y+h, x, y, rr);
-    ctx.arcTo(x, y, x+w, y, rr);
-    ctx.closePath();
-  }
-
-  function drawFixedOuterRing(){
-    // melnais ārējais gredzens
-    ctx.beginPath();
-    ctx.arc(0,0, fixedRing.r1, 0, Math.PI*2);
-    ctx.arc(0,0, fixedRing.r0, 0, Math.PI*2, true);
-    ctx.fillStyle = fixedRing.color;
-    ctx.fill("evenodd");
-
-    // sektoru līnijas + simboli
-    for(let i=0;i<SECTORS;i++){
-      const a0 = i*STEP + (-Math.PI/2);
-      const a1 = a0 + STEP;
-      const mid = (a0+a1)/2;
-
-      // robežlīnija
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a0)*fixedRing.r0, Math.sin(a0)*fixedRing.r0);
-      ctx.lineTo(Math.cos(a0)*fixedRing.r1, Math.sin(a0)*fixedRing.r1);
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "rgba(255,255,255,.12)";
-      ctx.stroke();
-
-      // mērķa slot highlight
-      if(i === TARGET_SLOT){
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0,0, (fixedRing.r0+fixedRing.r1)/2, a0+0.05, a1-0.05);
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = "rgba(212,162,74,.95)";
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // simbols
-      const rr = (fixedRing.r0+fixedRing.r1)/2;
-      const x = Math.cos(mid)*rr;
-      const y = Math.sin(mid)*rr;
-
-      ctx.save();
-      ctx.translate(x,y);
-      ctx.rotate(mid + Math.PI/2);
-      ctx.fillStyle = fixedRing.text;
-      ctx.font = (i===TARGET_SLOT) ? "800 34px system-ui" : "700 30px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(SYMBOLS[i], 0, 0);
-      ctx.restore();
-    }
-  }
-
-  function drawRing(ring){
-    ctx.save();
-    ctx.rotate(ring.angle);
-
-    for(let i=0;i<SECTORS;i++){
-      const a0 = i*STEP + (-Math.PI/2);
-      const a1 = a0 + STEP;
-
-      ctx.beginPath();
-      ctx.arc(0,0, ring.r1, a0, a1);
-      ctx.arc(0,0, ring.r0, a1, a0, true);
-      ctx.closePath();
-      ctx.fillStyle = ring.color;
-      ctx.fill();
-
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "rgba(0,0,0,.28)";
-      ctx.stroke();
-
-      const mid = (a0+a1)/2;
-      const rr = (ring.r0+ring.r1)/2;
-      const x = Math.cos(mid)*rr;
-      const y = Math.sin(mid)*rr;
-
-      ctx.save();
-      ctx.translate(x,y);
-      ctx.rotate(mid + Math.PI/2);
-      ctx.fillStyle = ring.text;
-      ctx.font = "bold 44px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(ring.digits[i]), 0, 0);
-      ctx.restore();
-    }
-
-    ctx.restore();
-  }
-
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // ārējais fiksētais aplis ar simboliem
-    drawFixedOuterRing();
-
-    // grozāmie riņķi
-    rings.forEach(r => drawRing(r));
-
-    // melnais centrs
-    ctx.beginPath();
-    ctx.arc(0,0, center.r, 0, Math.PI*2);
-    ctx.fillStyle = "#0b0f14";
-    ctx.fill();
-
-    // logs
-    ctx.save();
-    ctx.rotate(0.45);
-    roundRect(ctx, -80, -40, 160, 80, 14);
-    ctx.fillStyle = "#101826";
-    ctx.fill();
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = "#d4a24a";
-    ctx.stroke();
-    ctx.restore();
-
-    // centrs: OK vai ?
-    const ok = isCorrect();
-    ctx.fillStyle = ok ? "#34d399" : "#e5e7eb";
-    ctx.font = ok ? "900 54px system-ui" : "900 58px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(ok ? "OK" : "?", 26, -6);
-
-    // ass
-    ctx.beginPath();
-    ctx.arc(0,0, 18, 0, Math.PI*2);
-    ctx.fillStyle = "#111827";
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#0f172a";
-    ctx.stroke();
-
-    ctx.restore();
-
-    // info: kas ir pretī mērķa simbolam
-    const codeAtTarget = getCodeAtSlot(TARGET_SLOT);
-    stateText.textContent =
-      `Mērķis: ${SYMBOLS[TARGET_SLOT]} | Kods pretī mērķim = ${codeAtTarget} | Pareizais = ${ANSWER_CODE} | ${isCorrect() ? "✅" : "❌"}`;
-  }
-
-  // --- touch/mouse rotācija
-  let activeRing = null;
-  let startAngle = 0;
-  let startRingAngle = 0;
-
-  function getPointerPos(e){
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    const x = (clientX - rect.left) * (canvas.width / rect.width);
-    const y = (clientY - rect.top) * (canvas.height / rect.height);
-    return {x,y};
-  }
-
-  function pickRing(x,y){
-    const dx = x - cx, dy = y - cy;
-    const r = Math.hypot(dx,dy);
-    for(const ring of rings){
-      if(r >= ring.r0 && r <= ring.r1) return ring;
-    }
-    return null;
-  }
-
-  function pointAngle(x,y){
-    return Math.atan2(y - cy, x - cx);
-  }
-
-  function snapToSector(ring){
-    ring.angle = Math.round(ring.angle / STEP) * STEP;
-  }
-
-  function onDown(e){
-    e.preventDefault();
-    const {x,y} = getPointerPos(e);
-    const ring = pickRing(x,y);
-    if(!ring) return;
-    activeRing = ring;
-    startAngle = pointAngle(x,y);
-    startRingAngle = ring.angle;
-
-    window.addEventListener('pointermove', onMove, {passive:false});
-    window.addEventListener('pointerup', onUp, {passive:false});
-    window.addEventListener('pointercancel', onUp, {passive:false});
-  }
-
-  function onMove(e){
-    if(!activeRing) return;
-    e.preventDefault();
-    const {x,y} = getPointerPos(e);
-    const a = pointAngle(x,y);
-    const delta = a - startAngle;
-    activeRing.angle = startRingAngle + delta;
-    draw();
-  }
-
-  function onUp(e){
-    if(!activeRing) return;
-    e.preventDefault();
-    snapToSector(activeRing);
-    activeRing = null;
-    draw();
-    window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', onUp);
-    window.removeEventListener('pointercancel', onUp);
-  }
-
-  stage.addEventListener('pointerdown', onDown, {passive:false});
-
-  document.getElementById('reset').addEventListener('click', () => {
-    rings.forEach(r => r.angle = 0);
-    draw();
-  });
-  document.getElementById('random').addEventListener('click', () => {
-    rings.forEach(r => r.angle = (Math.floor(Math.random()*SECTORS) * STEP));
-    draw();
-  });
-
-  draw();
-})();
-</script>
+  <script src="assets/disk.js"></script>
+  <script src="assets/game.js"></script>
 </body>
 </html>
