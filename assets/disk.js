@@ -285,14 +285,13 @@
     canvas.addEventListener('pointerdown', onDown, {passive:false});
 
     function tick(){
-      // stūrī lēni griežas viss disks (vizuāli forši)
-      if(!interactive){
-        autoAngle += 0.0022;
-        rings.forEach((r, idx) => r.angle = autoAngle * (1 + idx*0.06));
-      }
-      requestAnimationFrame(tick);
-    }
-    tick();
+  if(!interactive){
+    autoAngle += 0.0022;
+    rings.forEach((r, idx) => r.angle = autoAngle * (1 + idx*0.06));
+    draw("?"); // <- lai vizuāli redz kustību stūrī
+  }
+  requestAnimationFrame(tick);
+}
 
     // initial draw
     draw("?");
