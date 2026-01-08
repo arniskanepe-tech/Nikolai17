@@ -42,6 +42,13 @@
     let statusText = "?";
     let statusOk = false;
 
+    // ===== “Pārbaudīt” poga =====
+    const checkBtn = {
+      r: 62, // klikšķa rādiuss (iekš melnā centra)
+      label: "Pārbaudīt",
+    };
+    let onCheck = null;
+
     // ===== ārējais fiksētais simbolu gredzens =====
     const symbols = opts.symbols || ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
     let targetSlot = Number.isInteger(opts.targetSlot) ? opts.targetSlot : 0;
@@ -167,7 +174,14 @@
       ctx.restore();
     }
 
-    function drawCenterText(){
+    function drawCenter(){
+      // melnais centrs
+      ctx.beginPath();
+      ctx.arc(0,0, center.r, 0, TAU);
+      ctx.fillStyle = "#0b0f14";
+      ctx.fill();
+
+      // status “lapiņa”
       ctx.save();
       ctx.rotate(0.45);
       roundRect(ctx, -78, -40, 156, 80, 14);
@@ -183,6 +197,25 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(statusText, 26, -6);
+
+      // “Pārbaudīt” poga (tikai, kad ir interactive)
+      if (interactive){
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 62, checkBtn.r, 0, TAU);
+        ctx.fillStyle = "rgba(255,255,255,0.10)";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.stroke();
+
+        ctx.fillStyle = "#e5e7eb";
+        ctx.font = "800 20px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(checkBtn.label, 0, 62);
+        ctx.restore();
+      }
     }
 
     function draw(){
@@ -192,15 +225,16 @@
 
       drawFixedOuterRing();
       rings.forEach(drawRing);
-
-      ctx.beginPath();
-      ctx.arc(0,0, center.r, 0, TAU);
-      ctx.fillStyle = "#0b0f14";
-      ctx.fill();
-
-      drawCenterText();
+      drawCenter();
 
       ctx.restore();
+    }
+
+    function getPointerPos(e){
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      return {x,y};
     }
 
     function pickRing(x,y){
@@ -221,11 +255,11 @@
       ring.angle = Math.round(ring.angle / STEP) * STEP;
     }
 
-    function getPointerPos(e){
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      return {x,y};
+    function isCheckButtonHit(x,y){
+      // pogu zīmējam pie (0, +62) lokāli, tātad globāli: (cx, cy+62)
+      const dx = x - cx;
+      const dy = y - (cy + 62);
+      return Math.hypot(dx,dy) <= checkBtn.r;
     }
 
     function onDown(e){
@@ -234,6 +268,13 @@
       e.preventDefault();
 
       const {x,y} = getPointerPos(e);
+
+      // ja uzspiež centrā “Pārbaudīt” pogu
+      if (isCheckButtonHit(x,y)){
+        if (typeof onCheck === "function") onCheck();
+        return;
+      }
+
       const ring = pickRing(x,y);
       if(!ring) return;
 
@@ -249,6 +290,7 @@
     function onMove(e){
       if(!activeRing) return;
       e.preventDefault();
+
       const {x,y} = getPointerPos(e);
       activeRing.angle = startRingAngle + (pointAngle(x,y) - startAngle);
     }
@@ -276,7 +318,6 @@
       draw();
       requestAnimationFrame(tick);
     }
-
     requestAnimationFrame(tick);
 
     return {
@@ -288,6 +329,9 @@
       renderStatus(text, ok){
         statusText = text;
         statusOk = !!ok;
+      },
+      setOnCheck(fn){
+        onCheck = (typeof fn === "function") ? fn : null;
       }
     };
   }
