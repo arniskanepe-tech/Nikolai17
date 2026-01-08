@@ -1,165 +1,321 @@
-:root{
-  --disk-size: min(22vw, 210px);      /* stūrī */
-  --disk-size-active: min(70vw, 560px); /* centrā */
-  --pad: 18px;
-}
+// assets/disk.js
+// Disku komponents ar 3 grozāmiem riņķiem + 1 fiksētu simbolu gredzenu.
+// Izmanto: window.DiskGameDisk.create({ canvas, targetSlot, symbols })
 
-*{ box-sizing:border-box; }
-html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+(function(){
+  const SECTORS = 9;
+  const TAU = Math.PI * 2;
+  const STEP = TAU / SECTORS;
 
-.scene{
-  position:relative;
-  height:100%;
-  width:100%;
-  overflow:hidden;
-  background: url("bg.jpg") center / cover no-repeat;
-}
+  function normAngle(a){
+    a = a % TAU;
+    return (a < 0) ? a + TAU : a;
+  }
 
-/* viegla “vignette”, lai UI labāk salasāms uz bildes */
-.scene::after{
-  content:"";
-  position:absolute; inset:0;
-  background: radial-gradient(circle at 50% 20%, rgba(0,0,0,0.05), rgba(0,0,0,0.35));
-  pointer-events:none;
-}
+  // slot 0 = 12:00
+  function angleToTopIndex(angle){
+    const a = normAngle(angle - (-Math.PI/2));
+    return (Math.round(a / STEP) % SECTORS);
+  }
 
-/* ===== DISKS ===== */
-.disk-shell{
-  position:absolute;
-  width: var(--disk-size);
-  aspect-ratio: 1;
-  border-radius: 999px;
-  z-index: 5;
-  cursor: pointer;
-  user-select:none;
-  touch-action:none;
-  transition: transform .8s ease, width .8s ease, top .8s ease, left .8s ease;
-  filter: drop-shadow(0 18px 40px rgba(0,0,0,.35));
-}
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
 
-.disk-shell canvas{
-  width:100%;
-  height:100%;
-  display:block;
-  border-radius: 999px;
-}
+  function create(opts){
+    const canvas = opts.canvas;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    const cx = W/2, cy = H/2;
 
-/* stūrī */
-.disk-corner{
-  top: var(--pad);
-  left: var(--pad);
-  transform: translate(0,0) scale(1);
-}
+    // ===== ārējais fiksētais simbolu gredzens =====
+    const symbols = opts.symbols || ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
+    let targetSlot = Number.isInteger(opts.targetSlot) ? opts.targetSlot : 0;
 
-/* centrā */
-.disk-center{
-  top: 50%;
-  left: 50%;
-  width: var(--disk-size-active);
-  transform: translate(-50%, -50%) scale(1);
-  cursor: grab;
-}
+    const fixedRing = {
+      r0: 410,
+      r1: 455,
+      color: "#0b0f14",
+      text: "#e5e7eb"
+    };
 
-.disk-center:active{ cursor: grabbing; }
+    // ===== grozāmie riņķi =====
+    const rings = [
+      { name:'white', color:'#f8fafc', text:'#0f172a', r0:300, r1:395, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+      { name:'red',   color:'#d32f2f', text:'#ffffff', r0:220, r1:300, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+      { name:'blue',  color:'#1e88e5', text:'#0b1020', r0:140, r1:220, angle: 0, digits:[1,2,3,4,5,6,7,8,9] },
+    ];
 
-.disk-hint{
-  position:absolute;
-  left:50%;
-  bottom:-10px;
-  transform: translate(-50%, 100%);
-  background: rgba(15, 23, 42, 0.78);
-  color: #fff;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  opacity: .95;
-  white-space: nowrap;
-  pointer-events:none;
-}
+    const center = { r:140 };
 
-.disk-center .disk-hint{ display:none; }
+    // ===== interaction =====
+    let interactive = false;
+    let activeRing = null;
+    let startAngle = 0;
+    let startRingAngle = 0;
 
-/* ===== KĀRTS ===== */
-.task-card{
-  position:absolute;
-  right: var(--pad);
-  bottom: var(--pad);
-  width: min(28vw, 320px);
-  max-width: 92vw;
-  background: rgba(255,255,255,0.94);
-  border-radius: 16px;
-  padding: 14px 14px 12px;
-  z-index: 6;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
-}
+    // auto-rotate when not interactive (corner mode)
+    let autoAngle = 0;
 
-.card-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.card-title{ font-weight: 800; font-size: 16px; }
-.card-subtitle{ font-weight: 700; font-size: 13px; opacity:.75; }
+    function ringValueAtSlot(ring, slot){
+      const topIdx = angleToTopIndex(ring.angle);
+      const idx = (topIdx + slot) % SECTORS;
+      return ring.digits[idx];
+    }
 
-.card-body p{ margin: 8px 0; }
-.muted{ opacity:.7; font-size: 13px; }
+    function getCodeAtSlot(slot){
+      const a = ringValueAtSlot(rings[0], slot);
+      const b = ringValueAtSlot(rings[1], slot);
+      const c = ringValueAtSlot(rings[2], slot);
+      return `${a}${b}${c}`;
+    }
 
-.card-actions{
-  display:flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-.code-input{
-  flex: 1;
-  border: 1px solid rgba(15,23,42,.18);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
-}
-.code-input:focus{
-  border-color: rgba(37,99,235,.55);
-  box-shadow: 0 0 0 4px rgba(37,99,235,.18);
-}
+    function drawFixedOuterRing(){
+      // gredzens
+      ctx.beginPath();
+      ctx.arc(0,0, fixedRing.r1, 0, TAU);
+      ctx.arc(0,0, fixedRing.r0, 0, TAU, true);
+      ctx.fillStyle = fixedRing.color;
+      ctx.fill("evenodd");
 
-.btn{
-  border: 0;
-  background: #111827;
-  color: #fff;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-weight: 800;
-  cursor:pointer;
-}
-.btn:active{ transform: translateY(1px); }
+      for(let i=0;i<SECTORS;i++){
+        const a0 = i*STEP + (-Math.PI/2);
+        const a1 = a0 + STEP;
+        const mid = (a0+a1)/2;
 
-.card-feedback{
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(15,23,42,.06);
-  font-weight: 700;
-  font-size: 13px;
-}
+        // robeža
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a0)*fixedRing.r0, Math.sin(a0)*fixedRing.r0);
+        ctx.lineTo(Math.cos(a0)*fixedRing.r1, Math.sin(a0)*fixedRing.r1);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(255,255,255,.14)";
+        ctx.stroke();
 
-/* HUD (debug) */
-.hud{
-  position:absolute;
-  left: var(--pad);
-  bottom: var(--pad);
-  z-index: 6;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.82);
-  font-size: 13px;
-  font-weight: 700;
-}
+        // target highlight + bultiņa
+        if(i === targetSlot){
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0,0, (fixedRing.r0+fixedRing.r1)/2, a0+0.06, a1-0.06);
+          ctx.lineWidth = 9;
+          ctx.strokeStyle = "rgba(212,162,74,.95)";
+          ctx.stroke();
+          ctx.restore();
 
-/* mobilajā kārti nedaudz mazāku */
-@media (max-width: 520px){
-  .task-card{ width: min(88vw, 360px); right: 12px; bottom: 12px; }
-  .hud{ left: 12px; bottom: 12px; }
-}
+          // bultiņa ārpus gredzena
+          ctx.save();
+          const r = fixedRing.r1 + 18;
+          ctx.translate(Math.cos(mid)*r, Math.sin(mid)*r);
+          ctx.rotate(mid + Math.PI/2);
+          ctx.fillStyle = "rgba(212,162,74,.98)";
+          ctx.font = "900 26px system-ui";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("▼", 0, 0);
+          ctx.restore();
+        }
+
+        // simbols
+        const rr = (fixedRing.r0+fixedRing.r1)/2;
+        const x = Math.cos(mid)*rr;
+        const y = Math.sin(mid)*rr;
+
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.rotate(mid + Math.PI/2);
+        ctx.fillStyle = fixedRing.text;
+        ctx.font = (i===targetSlot) ? "900 34px system-ui" : "800 32px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(symbols[i] ?? "•", 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function drawRing(ring){
+      ctx.save();
+      ctx.rotate(ring.angle);
+
+      for(let i=0;i<SECTORS;i++){
+        const a0 = i*STEP + (-Math.PI/2);
+        const a1 = a0 + STEP;
+
+        ctx.beginPath();
+        ctx.arc(0,0, ring.r1, a0, a1);
+        ctx.arc(0,0, ring.r0, a1, a0, true);
+        ctx.closePath();
+        ctx.fillStyle = ring.color;
+        ctx.fill();
+
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(0,0,0,.26)";
+        ctx.stroke();
+
+        const mid = (a0+a1)/2;
+        const rr = (ring.r0+ring.r1)/2;
+        const x = Math.cos(mid)*rr;
+        const y = Math.sin(mid)*rr;
+
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.rotate(mid + Math.PI/2);
+        ctx.fillStyle = ring.text;
+        ctx.font = "900 44px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(ring.digits[i]), 0, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function drawCenterText(text, ok){
+      ctx.save();
+      ctx.rotate(0.45);
+      roundRect(ctx, -78, -40, 156, 80, 14);
+      ctx.fillStyle = "#101826";
+      ctx.fill();
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = "#d4a24a";
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = ok ? "#34d399" : "#e5e7eb";
+      ctx.font = ok ? "900 54px system-ui" : "900 58px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 26, -6);
+    }
+
+    function draw(statusText="?", ok=false){
+      ctx.clearRect(0,0,W,H);
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      drawFixedOuterRing();
+      rings.forEach(r => drawRing(r));
+
+      // center black
+      ctx.beginPath();
+      ctx.arc(0,0, center.r, 0, TAU);
+      ctx.fillStyle = "#0b0f14";
+      ctx.fill();
+
+      drawCenterText(statusText, ok);
+
+      // axle
+      ctx.beginPath();
+      ctx.arc(0,0, 18, 0, TAU);
+      ctx.fillStyle = "#111827";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#0f172a";
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function pickRing(x,y){
+      const dx = x - cx, dy = y - cy;
+      const r = Math.hypot(dx,dy);
+      for(const ring of rings){
+        if(r >= ring.r0 && r <= ring.r1) return ring;
+      }
+      return null;
+    }
+
+    function pointAngle(x,y){
+      return Math.atan2(y - cy, x - cx);
+    }
+
+    function snapToSector(ring){
+      ring.angle = Math.round(ring.angle / STEP) * STEP;
+    }
+
+    function getPointerPos(e){
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+      const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+      const x = (clientX - rect.left) * (canvas.width / rect.width);
+      const y = (clientY - rect.top) * (canvas.height / rect.height);
+      return {x,y};
+    }
+
+    function onDown(e){
+      if(!interactive) return;
+      e.preventDefault();
+      const {x,y} = getPointerPos(e);
+      const ring = pickRing(x,y);
+      if(!ring) return;
+      activeRing = ring;
+      startAngle = pointAngle(x,y);
+      startRingAngle = ring.angle;
+
+      window.addEventListener('pointermove', onMove, {passive:false});
+      window.addEventListener('pointerup', onUp, {passive:false});
+      window.addEventListener('pointercancel', onUp, {passive:false});
+    }
+
+    function onMove(e){
+      if(!activeRing) return;
+      e.preventDefault();
+      const {x,y} = getPointerPos(e);
+      const a = pointAngle(x,y);
+      const delta = a - startAngle;
+      activeRing.angle = startRingAngle + delta;
+    }
+
+    function onUp(e){
+      if(!activeRing) return;
+      e.preventDefault();
+      snapToSector(activeRing);
+      activeRing = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    }
+
+    canvas.addEventListener('pointerdown', onDown, {passive:false});
+
+    function tick(){
+      // stūrī lēni griežas viss disks (vizuāli forši)
+      if(!interactive){
+        autoAngle += 0.0022;
+        rings.forEach((r, idx) => r.angle = autoAngle * (1 + idx*0.06));
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    // initial draw
+    draw("?");
+
+    // ===== PUBLIC API =====
+    return {
+      setInteractive(v){ interactive = !!v; },
+      setTargetSlot(slot){ targetSlot = ((slot%SECTORS)+SECTORS)%SECTORS; },
+      getTargetSlot(){ return targetSlot; },
+      getCodeAtTarget(){ return getCodeAtSlot(targetSlot); },
+      getCodeAtSlot,
+      // spēle pasaka, ko rādīt centrā
+      renderStatus(text, ok){ draw(text, ok); },
+      // ja vajag reset
+      reset(){
+        rings.forEach(r => r.angle = 0);
+        draw("?");
+      },
+      random(){
+        rings.forEach(r => r.angle = (Math.floor(Math.random()*SECTORS) * STEP));
+      }
+    };
+  }
+
+  window.DiskGameDisk = { create };
+})();
