@@ -53,6 +53,7 @@
   const cardBody = document.getElementById("cardBody");
   const feedback = document.getElementById("feedback");
   const targetSymbolLabel = document.getElementById("targetSymbolLabel");
+  const taskCard = document.getElementById("taskCard");
 
   const nextBtn = document.getElementById("nextBtn");
   const resultMsg = document.getElementById("resultMsg");
@@ -164,6 +165,8 @@
   document.addEventListener("pointerdown", (e) => {
     if (!isOpen) return;
     if (diskShell.contains(e.target)) return;
+    // klikšķi uz kārts (piem. poga "Tālāk") nedrīkst aizvērt disku
+    if (taskCard && taskCard.contains(e.target)) return;
     closeDisk();
   });
 
@@ -194,6 +197,14 @@
       // atstājam instrukciju, bet varam pielikt arī "mēģini vēl"
       // (īss, lai netraucē)
       feedback.innerHTML = `Pamēģini vēlreiz. Uzgriez kodu pretī <strong>${symbols[lvl.targetSlot]}</strong> un spied <strong>Pārbaudīt</strong>.`;
+
+      // pēc īsa brīža atgriežam pogu "Pārbaudīt" (citādi centrā paliek NĒ)
+      setTimeout(() => {
+        if (!solved && isOpen) {
+          // setInteractive(true) notīra statusu (statusOk = null) un rāda "Pārbaudīt"
+          disk.setInteractive(true);
+        }
+      }, 800);
     }
   });
 
