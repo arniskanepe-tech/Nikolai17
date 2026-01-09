@@ -233,7 +233,7 @@
       // ctx.strokeStyle = "#0f172a";
       // ctx.stroke();
 
-      // ctx.restore();
+      ctx.restore();
     }
 
     function getPointerPos(e){
