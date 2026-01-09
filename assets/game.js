@@ -91,21 +91,49 @@
 
     welcomeTitle.textContent = intro.greeting;
 
-    const onInput = () => {
+    // === FIX: support "dead keys" / composition (ā, ē, ģ, ķ, etc.) on desktop ===
+    let isComposing = false;
+
+    function tryValidateWelcome(force = false) {
       const v = normalize(welcomeInput.value);
-      if (v.length < 2) return;
+
+      // Ja nav force (piem. Enter), tad nelec virsū kamēr nav vismaz 2 burti
+      if (!force && v.length < 2) return;
 
       if (v === normalize(intro.answer)) {
         welcome.style.display = "none";
         startGame();
       } else {
+        // ja nav force un tomēr <2, nesaucam par kļūdu
+        if (!force && v.length < 2) return;
+
         showWelcomeHint(intro.wrongHint);
         welcomeInput.value = "";
         welcomeInput.focus();
       }
-    };
+    }
 
-    welcomeInput.addEventListener("input", onInput);
+    welcomeInput.addEventListener("compositionstart", () => {
+      isComposing = true;
+    });
+
+    welcomeInput.addEventListener("compositionend", () => {
+      isComposing = false;
+      tryValidateWelcome();
+    });
+
+    welcomeInput.addEventListener("input", () => {
+      if (isComposing) return; // kamēr veido ā/ē/ģ utt. – neko nedaram
+      tryValidateWelcome();
+    });
+
+    welcomeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        tryValidateWelcome(true);
+      }
+    });
+
     setTimeout(() => welcomeInput.focus(), 0);
   }
 
@@ -279,8 +307,6 @@
     // vizuāli atgriež
     disk.setInteractive(true);
     resultMsg.textContent = "";
-
-    disk.setInteractive(true);
 
     // atstāj disku stūrī (spēlētājs pats atver)
     closeDisk();
