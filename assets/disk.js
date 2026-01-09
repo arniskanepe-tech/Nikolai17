@@ -1,6 +1,6 @@
 // assets/disk.js
 // 3 grozāmi riņķi + fiksēts simbolu gredzens
-// + poga "Pārbaudīt" centrā (klikšķis -> callback)
+// + centrs kā aplis: "Pārbaudīt" / OK / NĒ
 // Stabils ciparu nolasījums: tas pats slotu režģis, kas zīmēšanā.
 
 (function(){
@@ -14,17 +14,6 @@
     return a < 0 ? a + TAU : a;
   }
 
-  function roundRect(ctx, x, y, w, h, r){
-    const rr = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y, x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x, y+h, rr);
-    ctx.arcTo(x, y+h, x, y, rr);
-    ctx.arcTo(x, y, x+w, y, rr);
-    ctx.closePath();
-  }
-
   function create(opts){
     const canvas = opts.canvas;
     const ctx = canvas.getContext("2d");
@@ -34,11 +23,13 @@
     const cx = W/2, cy = H/2;
 
     // ===== STATUS (centra teksts) =====
-    let statusText = "?";
-    let statusOk = false;
+    // statusOk: null => rādām "Pārbaudīt"
+    // statusOk: true => OK
+    // statusOk: false => NĒ
+    let statusText = "";
+    let statusOk = null;
 
-    // ===== “Pārbaudīt” poga =====
-    const checkBtn = { r: 62, y: -62, label: "Pārbaudīt" };
+    // ===== callback pārbaudei =====
     let onCheck = null;
 
     // ===== simboli =====
@@ -179,48 +170,49 @@
       ctx.restore();
     }
 
+    // ✅ JAUNA, TĪRA CENTRA ZĪMĒŠANA (APLIS, NEVIS TAISNSTŪRIS)
     function drawCenter(){
-      // melnais centrs
+      // centrs
       ctx.beginPath();
       ctx.arc(0,0, center.r, 0, TAU);
       ctx.fillStyle = "#0b0f14";
       ctx.fill();
 
-      // status plāksnīte
-      ctx.save();
-      ctx.rotate(0.45);
-      roundRect(ctx, -78, -40, 156, 80, 14);
-      ctx.fillStyle = "#101826";
-      ctx.fill();
+      // zelta rāmis
       ctx.lineWidth = 7;
       ctx.strokeStyle = "#d4a24a";
       ctx.stroke();
-      ctx.restore();
 
-      ctx.fillStyle = statusOk ? "#34d399" : "#e5e7eb";
-      ctx.font = statusOk ? "900 54px system-ui" : "900 58px system-ui";
+      // saturs
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(statusText, 26, -6);
 
-      // Poga “Pārbaudīt” (tikai, kad interactive)
-      if (interactive){
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, checkBtn.y, checkBtn.r, 0, TAU);
-        ctx.fillStyle = "rgba(255,255,255,0.10)";
-        ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "rgba(255,255,255,0.22)";
-        ctx.stroke();
-
+      if (interactive && statusOk === null){
+        // "Pārbaudīt" režīms
         ctx.fillStyle = "#e5e7eb";
-        ctx.font = "800 20px system-ui";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(checkBtn.label, 0, checkBtn.y);
-        ctx.restore();
+        ctx.font = "800 22px system-ui";
+        ctx.fillText("Pārbaudīt", 0, 0);
+
+        // viegls iekšējais aplis (pogas sajūtai)
+        ctx.beginPath();
+        ctx.arc(0,0, center.r - 16, 0, TAU);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.stroke();
+      } else {
+        // OK / NĒ režīms
+        const ok = !!statusOk;
+        const text = statusText || (ok ? "OK" : "NĒ");
+        ctx.fillStyle = ok ? "#34d399" : "#ef4444";
+        ctx.font = "900 64px system-ui";
+        ctx.fillText(text, 0, 2);
       }
+
+      // ass punkts (mazs, lai netraucē)
+      ctx.beginPath();
+      ctx.arc(0,0, 8, 0, TAU);
+      ctx.fillStyle = "#111827";
+      ctx.fill();
     }
 
     function draw(){
@@ -268,10 +260,11 @@
       ring.angle = Math.round(ring.angle / STEP) * STEP;
     }
 
-    function isCheckButtonHit(x,y){
+    // ✅ CENTRA APLIS = POGA
+    function isCenterHit(x,y){
       const dx = x - cx;
-      const dy = y - (cy + checkBtn.y);
-      return Math.hypot(dx,dy) <= checkBtn.r;
+      const dy = y - cy;
+      return Math.hypot(dx,dy) <= center.r;
     }
 
     function onDown(e){
@@ -281,8 +274,8 @@
 
       const {x,y} = getPointerPos(e);
 
-      // Poga “Pārbaudīt”
-      if (isCheckButtonHit(x,y)){
+      // klikšķis uz centra apļa => Pārbaudīt
+      if (isCenterHit(x,y)){
         if (typeof onCheck === "function") onCheck();
         return;
       }
@@ -330,13 +323,29 @@
     requestAnimationFrame(tick);
 
     return {
-      setInteractive(v){ interactive = !!v; },
+      setInteractive(v){
+        interactive = !!v;
+        // kad atver disku: parādam "Pārbaudīt"
+        if (interactive){
+          statusOk = null;
+          statusText = "";
+        }
+      },
       setTargetSlot(slot){ targetSlot = ((slot%SECTORS)+SECTORS)%SECTORS; },
       getTargetSlot(){ return targetSlot; },
       getCodeAtTarget(){ return getCodeAtSlot(targetSlot); },
       getCodeAtSlot,
-      renderStatus(text, ok){ statusText = text; statusOk = !!ok; },
-      setOnCheck(fn){ onCheck = (typeof fn === "function") ? fn : null; }
+
+      // game.js var izsaukt:
+      // renderStatus("OK", true) vai renderStatus("NĒ", false)
+      renderStatus(text, ok){
+        statusText = text;
+        statusOk = !!ok;
+      },
+
+      // game.js uzliek:
+      // disk.setOnCheck(() => { ... })
+      setOnCheck(fn){ onCheck = (typeof fn === "function") ? fn : null; },
     };
   }
 
