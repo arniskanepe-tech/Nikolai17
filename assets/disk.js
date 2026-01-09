@@ -213,7 +213,7 @@
       ctx.arc(0,0, 8, 0, TAU);
       ctx.fillStyle = "#111827";
       ctx.fill();
-      }
+    }
 
     function draw(){
       ctx.clearRect(0,0,W,H);
