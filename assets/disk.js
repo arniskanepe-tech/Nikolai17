@@ -209,10 +209,10 @@
       }
 
       // ass punkts (mazs, lai netraucē)
-      ctx.beginPath();
-      ctx.arc(0,0, 8, 0, TAU);
-      ctx.fillStyle = "#111827";
-      ctx.fill();
+      // ctx.beginPath();
+      // ctx.arc(0,0, 8, 0, TAU);
+      // ctx.fillStyle = "#111827";
+      // ctx.fill();
     }
 
     function draw(){
