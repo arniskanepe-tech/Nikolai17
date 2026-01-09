@@ -225,15 +225,15 @@
       drawCenter();
 
       // axle
-      ctx.beginPath();
-      ctx.arc(0,0, 18, 0, TAU);
-      ctx.fillStyle = "#111827";
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#0f172a";
-      ctx.stroke();
+      // ctx.beginPath();
+      // ctx.arc(0,0, 18, 0, TAU);
+      // ctx.fillStyle = "#111827";
+      // ctx.fill();
+      // ctx.lineWidth = 4;
+      // ctx.strokeStyle = "#0f172a";
+      // ctx.stroke();
 
-      ctx.restore();
+      // ctx.restore();
     }
 
     function getPointerPos(e){
