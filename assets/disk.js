@@ -209,11 +209,11 @@
       }
 
       // ass punkts (mazs, lai netraucē)
-      ctx.beginPath();
-      ctx.arc(0,0, 8, 0, TAU);
-      ctx.fillStyle = "#111827";
-      ctx.fill();
-    }
+      // ctx.beginPath();
+      // ctx.arc(0,0, 8, 0, TAU);
+      // ctx.fillStyle = "#111827";
+      // ctx.fill();
+   // }
 
     function draw(){
       ctx.clearRect(0,0,W,H);
@@ -225,13 +225,13 @@
       drawCenter();
 
       // axle
-      ctx.beginPath();
-      ctx.arc(0,0, 18, 0, TAU);
-      ctx.fillStyle = "#111827";
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#0f172a";
-      ctx.stroke();
+      // ctx.beginPath();
+      // ctx.arc(0,0, 18, 0, TAU);
+      // ctx.fillStyle = "#111827";
+      // ctx.fill();
+      // ctx.lineWidth = 4;
+      // ctx.strokeStyle = "#0f172a";
+      // ctx.stroke();
 
       ctx.restore();
     }
