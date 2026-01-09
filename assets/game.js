@@ -279,7 +279,7 @@
     // vizuāli atgriež
     disk.setInteractive(true);
     resultMsg.textContent = "";
-am sākuma statusu
+
     disk.setInteractive(true);
 
     // atstāj disku stūrī (spēlētājs pats atver)
