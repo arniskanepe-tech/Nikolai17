@@ -3,6 +3,13 @@
   // ============ Konfigurācija (pagaidām hardcoded; vēlāk varēs vilkt no admin/JSON) ============
   const symbols = ["★","☾","▲","◆","✚","⬣","⬟","●","▣"];
 
+  // ===== Welcome / start gate (dzimšanas dienas režīms) =====
+  const intro = {
+    greeting: "Čau, Nikola! Daudz laimes dzimšanas dienā! Vai esi gatava?",
+    answer: "jā",
+    wrongHint: "tiešām?"
+  };
+
   const levels = [
     {
       id: 1,
@@ -12,7 +19,6 @@
       answer: "345",
       cardHtml: `
         <p>Kas par fantastisku Gadu Secību bijusi.</p>
-        <p><strong>Pareizā atbilde šoreiz būs 345.</strong></p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
@@ -24,7 +30,6 @@
       answer: "789",
       cardHtml: `
         <p>Otra bilde — otrais uzdevums.</p>
-        <p><strong>Pareizā atbilde šoreiz būs 789.</strong></p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
@@ -56,6 +61,54 @@
   const taskCard = document.getElementById("taskCard");
 
   const nextBtn = document.getElementById("nextBtn");
+
+  // ===== Welcome elements =====
+  const welcome = document.getElementById("welcome");
+  const welcomeTitle = document.getElementById("welcomeTitle");
+  const welcomeInput = document.getElementById("welcomeInput");
+  const welcomeHint = document.getElementById("welcomeHint");
+
+  function normalize(s){
+    return (s || "").trim().toLowerCase();
+  }
+
+  function showWelcomeHint(txt){
+    if (!welcomeHint) return;
+    welcomeHint.textContent = txt;
+    welcomeHint.classList.add("show");
+    setTimeout(() => welcomeHint.classList.remove("show"), 900);
+  }
+
+  function startGame(){
+    // ielādējam 1. līmeni
+    loadLevel(0);
+    // fokusam uz spēli: disks paliek stūrī, spēlētājs pats atver
+    closeDisk();
+  }
+
+  function setupWelcome(){
+    if (!welcome) { startGame(); return; }
+
+    welcomeTitle.textContent = intro.greeting;
+
+    const onInput = () => {
+      const v = normalize(welcomeInput.value);
+      if (v.length < 2) return;
+
+      if (v === normalize(intro.answer)) {
+        welcome.style.display = "none";
+        startGame();
+      } else {
+        showWelcomeHint(intro.wrongHint);
+        welcomeInput.value = "";
+        welcomeInput.focus();
+      }
+    };
+
+    welcomeInput.addEventListener("input", onInput);
+    setTimeout(() => welcomeInput.focus(), 0);
+  }
+
   const resultMsg = document.getElementById("resultMsg");
 
   // ============ Disks ============
@@ -115,18 +168,18 @@
       feedback.innerHTML =
         `Uzgriez disku, līdz pretī mērķa simbolam <strong>${symbols[lvl.targetSlot]}</strong> redzi kodu. ` +
         `Kad esi gatavs, spied centrā <strong>Pārbaudīt</strong>.`;
-      disk.renderStatus("?", false);
+      disk.setInteractive(true);
     } else {
       feedback.innerHTML =
         `Klikšķini uz diska stūrī, lai atvērtu. Kad pareizi — centrā parādīsies <strong>OK</strong>.`;
-      disk.renderStatus("?", false);
+      disk.setInteractive(true);
     }
   }
 
   // sākuma stāvoklis
   disk.setInteractive(false);
-  disk.renderStatus("?", false);
-  loadLevel(0);
+  disk.setInteractive(true);
+  setupWelcome();
 
   function openDisk() {
     if (isOpen) return;
@@ -223,8 +276,11 @@
 
     loadLevel(levelIndex + 1);
 
-    // vizuāli atgriežam sākuma statusu
-    disk.renderStatus("?", false);
+    // vizuāli atgriež
+    disk.setInteractive(true);
+    resultMsg.textContent = "";
+am sākuma statusu
+    disk.setInteractive(true);
 
     // atstāj disku stūrī (spēlētājs pats atver)
     closeDisk();

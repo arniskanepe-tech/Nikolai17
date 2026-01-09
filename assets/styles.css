@@ -193,3 +193,68 @@ html,body{
 .next-btn[hidden]{
   display:none !important;
 }
+
+
+/* ===== Welcome screen ===== */
+.welcome{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+}
+
+.welcome-card{
+  width: min(560px, 92vw);
+  background: rgba(255,255,255,0.94);
+  border-radius: 18px;
+  padding: 22px 18px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.35);
+}
+
+.welcome-card h1{
+  margin: 0 0 8px 0;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.welcome-sub{
+  margin: 0 0 12px 0;
+  color: rgba(0,0,0,0.7);
+}
+
+.welcome-input{
+  width: 100%;
+  border: 2px solid rgba(0,0,0,0.15);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.welcome-input:focus{
+  border-color: rgba(0,0,0,0.35);
+}
+
+.welcome-hint{
+  margin-top: 10px;
+  min-height: 20px;
+  color: #b91c1c;
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.welcome-hint.show{
+  opacity: 1;
+}
+
+.welcome-foot{
+  margin-top: 10px;
+  color: rgba(0,0,0,0.55);
+  font-size: 13px;
+}

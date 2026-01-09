@@ -8,6 +8,18 @@
 </head>
 <body>
 
+  <!-- WELCOME / START -->
+  <div id="welcome" class="welcome" aria-label="Sākuma ekrāns">
+    <div class="welcome-card">
+      <h1 id="welcomeTitle">Čau!</h1>
+      <p class="welcome-sub">Ieraksti atbildi, lai sāktu spēli.</p>
+      <input id="welcomeInput" class="welcome-input" maxlength="2" autocomplete="off" inputmode="text" />
+      <div id="welcomeHint" class="welcome-hint" aria-live="polite"></div>
+      <div class="welcome-foot">Padoms: atbilde ir tikai 2 burti.</div>
+    </div>
+  </div>
+
+
   <main class="scene" id="scene">
     <!-- DISKS (sākumā stūrī, lēni griežas) -->
     <div class="disk-shell disk-corner" id="diskShell" aria-label="Disk">
