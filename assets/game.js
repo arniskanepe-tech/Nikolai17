@@ -44,6 +44,17 @@
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     }
+    {
+      id: 4,
+      title: "Uzdevums #4",
+      background: "bg3.jpg",
+      targetSlot: 2,      // ☾
+      answer: "713",
+      cardHtml: `
+        <p>Hello, Nikola.</p>
+        <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
+      `,
+    }
   ];
 
   const wrongMessages = [
