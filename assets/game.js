@@ -43,7 +43,7 @@
         <p>Remember the running.</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
-    }
+    },
     {
       id: 4,
       title: "Uzdevums #4",
