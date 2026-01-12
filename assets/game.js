@@ -49,7 +49,7 @@
       title: "Uzdevums #4",
       background: "bg3.jpg",
       targetSlot: 2,      // ☾
-      answer: "713",
+      answer: "317",
       cardHtml: `
         <p>Hello, Nikola.</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
