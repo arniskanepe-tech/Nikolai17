@@ -26,18 +26,18 @@
       id: 2,
       title: "Uzdevums #2",
       background: "bg1.jpg",
-      targetSlot: 0,      // ★ (piemērs)
+      targetSlot: 0,      // ★
       answer: "789",
       cardHtml: `
         <p>Otra bilde — otrais uzdevums.</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
-        {
+    {
       id: 3,
       title: "Uzdevums #3",
       background: "bg2.jpg",
-      targetSlot: 3,      // ☾
+      targetSlot: 3,      // ◆ (symbols[3])
       answer: "159",
       cardHtml: `
         <p>Remember the running.</p>
@@ -48,7 +48,7 @@
       id: 4,
       title: "Uzdevums #4",
       background: "bg3.jpg",
-      targetSlot: 2,      // ☾
+      targetSlot: 2,      // ▲ (symbols[2])
       answer: "317",
       cardHtml: `
         <p>Hello, Nikola.</p>
@@ -102,9 +102,7 @@
   }
 
   function startGame(){
-    // ielādējam 1. līmeni
     loadLevel(0);
-    // fokusam uz spēli: disks paliek stūrī, spēlētājs pats atver
     closeDisk();
   }
 
@@ -119,14 +117,12 @@
     function tryValidateWelcome(force = false) {
       const v = normalize(welcomeInput.value);
 
-      // Ja nav force (piem. Enter), tad nelec virsū kamēr nav vismaz 2 burti
       if (!force && v.length < 2) return;
 
       if (v === normalize(intro.answer)) {
         welcome.style.display = "none";
         startGame();
       } else {
-        // ja nav force un tomēr <2, nesaucam par kļūdu
         if (!force && v.length < 2) return;
 
         showWelcomeHint(intro.wrongHint);
@@ -145,7 +141,7 @@
     });
 
     welcomeInput.addEventListener("input", () => {
-      if (isComposing) return; // kamēr veido ā/ē/ģ utt. – neko nedaram
+      if (isComposing) return;
       tryValidateWelcome();
     });
 
@@ -213,7 +209,7 @@
     solved = false;
     resetResultUI();
 
-    // ja disks ir atvērts, atjaunojam instrukciju tekstu
+    // instrukcijas
     if (isOpen) {
       feedback.innerHTML =
         `Uzgriez disku, līdz pretī mērķa simbolam <strong>${symbols[lvl.targetSlot]}</strong> redzi kodu. ` +
@@ -240,9 +236,8 @@
     diskShell.classList.add("disk-center");
     diskShell.classList.remove("disk-corner");
 
-    disk.setInteractive(true); // disk.js pats notīra statusu, ja vajag
+    disk.setInteractive(true);
 
-    // šeit šobrīd nerādam pareizo atbildi – tikai instrukciju
     feedback.innerHTML =
       `Uzgriez disku, līdz pretī mērķa simbolam <strong>${symbols[lvl.targetSlot]}</strong> redzi kodu. ` +
       `Kad esi gatavs, spied centrā <strong>Pārbaudīt</strong>.`;
@@ -258,6 +253,25 @@
     disk.setInteractive(false);
   }
 
+  // ===== Fināla ekrāns (finiss.jpg) =====
+  function showFinalScreen() {
+    // “mīksti” aizveram disku (lai nav lēciens)
+    if (isOpen) closeDisk();
+
+    // neliela pauze, lai klases paspēj nomainīties (ja ir CSS pārejas)
+    setTimeout(() => {
+      // paslēpjam UI
+      if (taskCard) taskCard.hidden = true;
+      if (diskShell) diskShell.hidden = true;
+
+      // drošībai izslēdzam interaktivitāti
+      try { disk.setInteractive(false); } catch(e) {}
+
+      // uzliekam pēdējo fonu
+      scene.style.backgroundImage = `url("assets/finiss.jpg")`;
+    }, 220);
+  }
+
   // atver tikai stūrī
   diskShell.addEventListener("click", () => {
     if (!diskShell.classList.contains("disk-corner")) return;
@@ -268,14 +282,11 @@
   document.addEventListener("pointerdown", (e) => {
     if (!isOpen) return;
     if (diskShell.contains(e.target)) return;
-    // klikšķi uz kārts (piem. poga "Tālāk") nedrīkst aizvērt disku
     if (taskCard && taskCard.contains(e.target)) return;
     closeDisk();
   });
 
-  // ========= Mazais mērķis #1: "Tālāk" pēc OK + random teksts pēc NĒ =========
-
-  // POGA “Pārbaudīt” -> te notiek salīdzināšana
+  // ========= POGA “Pārbaudīt” =========
   disk.setOnCheck(() => {
     if (!isOpen) return;
 
@@ -286,9 +297,25 @@
       solved = true;
       disk.renderStatus("OK", true);
 
+      const isLast = levelIndex >= levels.length - 1;
+
+      if (isLast) {
+        // pēdējais līmenis: uzreiz uz finālu, bez "Tālāk"
+        setNextVisible(false);
+        resultMsg.textContent = "";
+        feedback.innerHTML = `Pareizi!`;
+
+        // īsa pauze, lai OK “ielasās”, tad finiss
+        setTimeout(() => {
+          showFinalScreen();
+        }, 420);
+
+        return;
+      }
+
+      // nav pēdējais
       resultMsg.textContent = "";
       setNextVisible(true);
-
       feedback.innerHTML = `Pareizi! Spied <strong>Tālāk</strong>, lai pārietu uz nākamo uzdevumu.`;
     } else {
       solved = false;
@@ -297,50 +324,32 @@
       setNextVisible(false);
       resultMsg.textContent = getNextWrongMessage();
 
-      // atstājam instrukciju, bet varam pielikt arī "mēģini vēl"
-      // (īss, lai netraucē)
       feedback.innerHTML = `Pamēģini vēlreiz. Uzgriez kodu pretī <strong>${symbols[lvl.targetSlot]}</strong> un spied <strong>Pārbaudīt</strong>.`;
 
-      // pēc īsa brīža atgriežam pogu "Pārbaudīt" (citādi centrā paliek NĒ)
       setTimeout(() => {
         if (!solved && isOpen) {
-          // setInteractive(true) notīra statusu (statusOk = null) un rāda "Pārbaudīt"
           disk.setInteractive(true);
         }
       }, 800);
     }
   });
 
-function showFinalScreen() {
-  // paslēpjam UI
-  if (taskCard) taskCard.hidden = true;
-  if (diskShell) diskShell.hidden = true;
-
-  // aizveram disku (ja bija atvērts)
-  isOpen = false;
-  try { disk.setInteractive(false); } catch(e) {}
-
-  // uzliekam pēdējo fonu
-  scene.style.backgroundImage = `url("assets/finiss.jpg")`;
-}
- 
-  // TĀLĀK -> nākamais līmenis (vai beigas)
+  // ========= TĀLĀK =========
   nextBtn.addEventListener("click", () => {
     if (!solved) return;
 
+    // (drošībai) ja tomēr kādreiz atstāj "Tālāk" pēdējā līmenī
     const isLast = levelIndex >= levels.length - 1;
     if (isLast) {
-    showFinalScreen();
-    return;
+      showFinalScreen();
+      return;
     }
 
     loadLevel(levelIndex + 1);
 
-    // vizuāli atgriež
     disk.setInteractive(true);
     resultMsg.textContent = "";
 
-    // atstāj disku stūrī (spēlētājs pats atver)
     closeDisk();
   });
 })();
