@@ -311,17 +311,27 @@
     }
   });
 
+function showFinalScreen() {
+  // paslēpjam UI
+  if (taskCard) taskCard.hidden = true;
+  if (diskShell) diskShell.hidden = true;
+
+  // aizveram disku (ja bija atvērts)
+  isOpen = false;
+  try { disk.setInteractive(false); } catch(e) {}
+
+  // uzliekam pēdējo fonu
+  scene.style.backgroundImage = `url("assets/finiss.jpg")`;
+}
+ 
   // TĀLĀK -> nākamais līmenis (vai beigas)
   nextBtn.addEventListener("click", () => {
     if (!solved) return;
 
     const isLast = levelIndex >= levels.length - 1;
     if (isLast) {
-      // vienkāršs finišs (vēlāk varēs taisīt "sākums no jauna" vai "menu")
-      setNextVisible(false);
-      resultMsg.textContent = "🎉 Viss! Spēle pabeigta.";
-      feedback.innerHTML = "Ja gribi, vari pārlādēt lapu, lai sāktu no sākuma.";
-      return;
+    showFinalScreen();
+    return;
     }
 
     loadLevel(levelIndex + 1);
