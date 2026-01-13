@@ -61,10 +61,6 @@
       background: "bg4.jpg",
       targetSlot: 6,      // ⬟ (symbols[6])
       answer: "368",
-      cardHtml: `
-        <p>Hello, Nikola.</p>
-        <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
-      `,
     },
   ];
 
