@@ -69,16 +69,16 @@
   ];
 
   const wrongMessages = [
-    "Tā jau nu gan nebūs",
-    "Sīkais, nu tu dod...",
-    "Ola, Ola, seniorita...",
-    "Wtf...",
-    "Vēl kaut kādas grandiozas idejas..",
-    "Asprāte, ja?",
-    "Atpakaļ uz bērnu dārzu?",
-    "Saņemies, tu to vari?",
-    "Es zinu, ka tu vari labāk!",
-    "Forza, forza!!!",
+    { text: "Tā jau nu gan nebūs", sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Sīkais, nu tu dod...",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Ola, Ola, seniorita...",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Wtf...",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Vēl kaut kādas grandiozas idejas..",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Asprāte, ja?",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Atpakaļ uz bērnu dārzu?",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Saņemies, tu to vari?",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Es zinu, ka tu vari labāk!",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Forza, forza!!!",sound: "assets/sounds/wrong_01.m4a"},
   ];
 
   // ============ DOM ============
