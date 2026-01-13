@@ -48,13 +48,23 @@
       id: 4,
       title: "Uzdevums #4",
       background: "bg3.jpg",
-      targetSlot: 2,      // ▲ (symbols[2])
+      targetSlot: 2,      // ▲" (symbols[2])
       answer: "317",
       cardHtml: `
         <p>Hello, Nikola.</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
-    }
+    },
+    {
+      id: 5,
+      title: "⬟",
+      background: "bg3.jpg",
+      targetSlot: 6,      // ⬟ (symbols[6])
+      answer: "368",
+      cardHtml: `
+        <p>Hello, Nikola.</p>
+        <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
+      `,
   ];
 
   const wrongMessages = [
