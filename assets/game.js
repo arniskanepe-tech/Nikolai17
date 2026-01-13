@@ -182,6 +182,28 @@
   let isOpen = false;
   let solved = false;
 
+// ===== Audio unlock (required for Safari / iOS / some Chrome cases) =====
+  let audioUnlocked = false;
+
+  function unlockAudioOnce() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+
+    const a = new Audio("/assets/sound/wrong_01.m4a");
+    a.volume = 0; // pilnīgi kluss
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+  }).catch(() => {
+    // ignore
+  });
+}
+
+// pirmais īstais lietotāja žests
+document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
+document.addEventListener("keydown", unlockAudioOnce, { once: true });
+
+  
   // pool bez atkārtošanās, līdz iztukšojas
   let wrongPool = [...wrongMessages];
 
