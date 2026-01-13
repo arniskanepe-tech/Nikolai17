@@ -13,7 +13,7 @@
   const levels = [
     {
       id: 1,
-      // title: "Uzdevums #1",
+      title: // "Uzdevums #1",
       background: "bg.jpg",
       targetSlot: 1,      // ☾
       answer: "345",
