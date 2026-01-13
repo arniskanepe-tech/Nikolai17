@@ -13,13 +13,13 @@
   const levels = [
     {
       id: 1,
-      title: "Uzdevums #1",
+      // title: "Uzdevums #1",
       background: "bg.jpg",
       targetSlot: 1,      // ☾
       answer: "345",
       cardHtml: `
         <p>Kas par fantastisku Gadu Secību bijusi.</p>
-        <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
+        // <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
     {
