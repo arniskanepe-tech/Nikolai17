@@ -40,7 +40,7 @@
       targetSlot: 3,      // ◆ (symbols[3])
       answer: "159",
       cardHtml: `
-        <p>Remember the running.</p>
+        <p></p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
@@ -51,7 +51,7 @@
       targetSlot: 2,      // ▲" (symbols[2])
       answer: "317",
       cardHtml: `
-        <p>Hello, Nikola.</p>
+        <p></p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
