@@ -65,6 +65,7 @@
         <p>Hello, Nikola.</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
+    },
   ];
 
   const wrongMessages = [
