@@ -183,10 +183,20 @@
   // pool bez atkārtošanās, līdz iztukšojas
   let wrongPool = [...wrongMessages];
 
+function playSfx(src) {
+  if (!src) return;
+  const a = new Audio(src);
+  a.preload = "auto";
+  a.play().catch(() => {
+    // dažos pārlūkos bez lietotāja žesta audio var tikt bloķēts
+  });
+}
+  
   function getNextWrongMessage() {
     if (wrongPool.length === 0) wrongPool = [...wrongMessages];
     const idx = Math.floor(Math.random() * wrongPool.length);
     return wrongPool.splice(idx, 1)[0];
+    playSfx(wrong.sound);
   }
 
   function setNextVisible(visible) {
