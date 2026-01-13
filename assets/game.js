@@ -48,7 +48,7 @@
       id: 4,
       title: "",
       background: "bg3.jpg",
-      targetSlot: 2,      // ▲" (symbols[2])
+      targetSlot: 2,      // ▲ (symbols[2])
       answer: "317",
       cardHtml: `
         <p></p>
@@ -68,17 +68,19 @@
     },
   ];
 
+  // ✅ Teksts + skaņa vienā objektā
+  // Ieteikums: drošākas (absolūtas) takas no root: "/assets/sounds/..."
   const wrongMessages = [
-    { text: "Tā jau nu gan nebūs", sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Sīkais, nu tu dod...",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Ola, Ola, seniorita...",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Wtf...",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Vēl kaut kādas grandiozas idejas..",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Asprāte, ja?",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Atpakaļ uz bērnu dārzu?",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Saņemies, tu to vari?",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Es zinu, ka tu vari labāk!",sound: "assets/sounds/wrong_01.m4a"},
-    { text: "Forza, forza!!!",sound: "assets/sounds/wrong_01.m4a"},
+    { text: "Tā jau nu gan nebūs",                 sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Sīkais, nu tu dod...",                sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Ola, Ola, seniorita...",              sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Wtf...",                              sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Vēl kaut kādas grandiozas idejas..",  sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Asprāte, ja?",                        sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Atpakaļ uz bērnu dārzu?",             sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Saņemies, tu to vari?",               sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Es zinu, ka tu vari labāk!",          sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Forza, forza!!!",                     sound: "/assets/sounds/wrong_01.m4a" },
   ];
 
   // ============ DOM ============
@@ -183,20 +185,22 @@
   // pool bez atkārtošanās, līdz iztukšojas
   let wrongPool = [...wrongMessages];
 
-function playSfx(src) {
-  if (!src) return;
-  const a = new Audio(src);
-  a.preload = "auto";
-  a.play().catch(() => {
-    // dažos pārlūkos bez lietotāja žesta audio var tikt bloķēts
-  });
-}
-  
+  function playSfx(src) {
+    if (!src) return;
+    const a = new Audio(src);
+    a.preload = "auto";
+    a.play().catch(() => {
+      // dažos pārlūkos bez lietotāja žesta audio var tikt bloķēts
+    });
+  }
+
+  // ✅ Izvēlas random “wrong” (bez atkārtošanās), atskaņo skaņu un atgriež TEKSTU
   function getNextWrongMessage() {
     if (wrongPool.length === 0) wrongPool = [...wrongMessages];
     const idx = Math.floor(Math.random() * wrongPool.length);
-    return wrongPool.splice(idx, 1)[0];
-    playSfx(wrong.sound);
+    const item = wrongPool.splice(idx, 1)[0]; // { text, sound }
+    playSfx(item.sound);
+    return item.text;
   }
 
   function setNextVisible(visible) {
