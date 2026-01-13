@@ -13,7 +13,7 @@
   const levels = [
     {
       id: 1,
-      title: "Uzdevums #1",
+      title: "",
       background: "bg.jpg",
       targetSlot: 1,      // ☾
       answer: "345",
@@ -24,7 +24,7 @@
     },
     {
       id: 2,
-      title: "Uzdevums #2",
+      title: "",
       background: "bg1.jpg",
       targetSlot: 0,      // ★
       answer: "789",
@@ -35,7 +35,7 @@
     },
     {
       id: 3,
-      title: "Uzdevums #3",
+      title: "",
       background: "bg2.jpg",
       targetSlot: 3,      // ◆ (symbols[3])
       answer: "159",
@@ -46,7 +46,7 @@
     },
     {
       id: 4,
-      title: "Uzdevums #4",
+      title: "",
       background: "bg3.jpg",
       targetSlot: 2,      // ▲" (symbols[2])
       answer: "317",
