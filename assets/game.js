@@ -5,7 +5,7 @@
 
   // ===== Welcome / start gate (dzimšanas dienas režīms) =====
   const intro = {
-    greeting: "Čau, Nikola! Daudz laimes dzimšanas dienā! Vai esi gatava?",
+    greeting: "Čau, Nikola! Daudz laimes dzimšanas dienā! Esam tev sarūpējuši vēl vienu dāvan, kas liks parakāties atmiņas dzīlēs, paskaitīt, iespējams pasvīst un cerams sagādās pozitīvas emocijas. Vai esi gatava?",
     answer: "jā",
     wrongHint: "tiešām?"
   };
