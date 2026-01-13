@@ -71,16 +71,16 @@
   // ✅ Teksts + skaņa vienā objektā
   // Ieteikums: drošākas (absolūtas) takas no root: "/assets/sounds/..."
   const wrongMessages = [
-    { text: "Tā jau nu gan nebūs",                 sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Sīkais, nu tu dod...",                sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Ola, Ola, seniorita...",              sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Wtf...",                              sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Vēl kaut kādas grandiozas idejas..",  sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Asprāte, ja?",                        sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Atpakaļ uz bērnu dārzu?",             sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Saņemies, tu to vari?",               sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Es zinu, ka tu vari labāk!",          sound: "/assets/sounds/wrong_01.m4a" },
-    { text: "Forza, forza!!!",                     sound: "/assets/sounds/wrong_01.m4a" },
+    { text: "Tā jau nu gan nebūs",                 sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Sīkais, nu tu dod...",                sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Ola, Ola, seniorita...",              sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Wtf...",                              sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Vēl kaut kādas grandiozas idejas..",  sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Asprāte, ja?",                        sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Atpakaļ uz bērnu dārzu?",             sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Saņemies, tu to vari?",               sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Es zinu, ka tu vari labāk!",          sound: "/assets/sound/wrong_01.m4a" },
+    { text: "Forza, forza!!!",                     sound: "/assets/sound/wrong_01.m4a" },
   ];
 
   // ============ DOM ============
