@@ -68,8 +68,7 @@
     },
   ];
 
-  // ✅ Teksts + skaņa vienā objektā
-  // Ieteikums: drošākas (absolūtas) takas no root: "/assets/sounds/..."
+  // ✅ Teksts + skaņa vienā objektā (folderis repo ir assets/sound/)
   const wrongMessages = [
     { text: "Tā jau nu gan nebūs",                 sound: "/assets/sound/wrong_01.m4a" },
     { text: "Sīkais, nu tu dod...",                sound: "/assets/sound/wrong_01.m4a" },
@@ -182,7 +181,7 @@
   let isOpen = false;
   let solved = false;
 
-// ===== Audio unlock (required for Safari / iOS / some Chrome cases) =====
+  // ===== Audio unlock (required for Safari / iOS / some Chrome cases) =====
   let audioUnlocked = false;
 
   function unlockAudioOnce() {
@@ -191,19 +190,19 @@
 
     const a = new Audio("/assets/sound/wrong_01.m4a");
     a.volume = 0; // pilnīgi kluss
-    a.play().then(() => {
-      a.pause();
-      a.currentTime = 0;
-  }).catch(() => {
-    // ignore
-  });
-}
+    a.play()
+      .then(() => {
+        a.pause();
+        a.currentTime = 0;
+      })
+      .catch(() => {
+        // ignore
+      });
+  }
 
-// pirmais īstais lietotāja žests
-document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
-document.addEventListener("keydown", unlockAudioOnce, { once: true });
+  document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
+  document.addEventListener("keydown", unlockAudioOnce, { once: true });
 
-  
   // pool bez atkārtošanās, līdz iztukšojas
   let wrongPool = [...wrongMessages];
 
@@ -211,12 +210,10 @@ document.addEventListener("keydown", unlockAudioOnce, { once: true });
     if (!src) return;
     const a = new Audio(src);
     a.preload = "auto";
-    a.play().catch(() => {
-      // dažos pārlūkos bez lietotāja žesta audio var tikt bloķēts
-    });
+    a.play().catch(() => {});
   }
 
-  // ✅ Izvēlas random “wrong” (bez atkārtošanās), atskaņo skaņu un atgriež TEKSTU
+  // Izvēlas random “wrong” (bez atkārtošanās), atskaņo skaņu un atgriež TEKSTU
   function getNextWrongMessage() {
     if (wrongPool.length === 0) wrongPool = [...wrongMessages];
     const idx = Math.floor(Math.random() * wrongPool.length);
