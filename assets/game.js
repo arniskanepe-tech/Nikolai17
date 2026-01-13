@@ -57,10 +57,13 @@
     },
     {
       id: 5,
-      title: "⬟",
+      title: "",
       background: "bg4.jpg",
       targetSlot: 6,      // ⬟ (symbols[6])
       answer: "368",
+          <p></p>
+          <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
+      `,
     },
   ];
 
