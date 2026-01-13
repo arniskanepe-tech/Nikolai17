@@ -58,7 +58,7 @@
     {
       id: 5,
       title: "⬟",
-      background: "bg3.jpg",
+      background: "bg4.jpg",
       targetSlot: 6,      // ⬟ (symbols[6])
       answer: "368",
       cardHtml: `
