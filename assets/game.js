@@ -29,7 +29,7 @@
       targetSlot: 0,      // ★
       answer: "789",
       cardHtml: `
-        <p>Otra bilde — otrais uzdevums.</p>
+        <p>Steady, Dress up, Go!</p>
         <p class="muted">Uzgriez kodu pretī izvēlētajam simbolam.</p>
       `,
     },
